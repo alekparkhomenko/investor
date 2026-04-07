@@ -1,0 +1,9 @@
+go 1.21
+
+use (
+	./cmd/server
+	./cmd/ingestor
+	./cmd/alert-engine
+	./cmd/notifier
+	./pkg/models
+)
