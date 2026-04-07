@@ -18,7 +18,6 @@ WORKDIR /app
 COPY --from=builder /app/ingestor .
 
 ENV KAFKA_BROKER=localhost:9092
-ENV FINNHUB_API_KEY=
 
 EXPOSE 8080
 

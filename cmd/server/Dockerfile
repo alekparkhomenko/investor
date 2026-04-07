@@ -17,7 +17,6 @@ WORKDIR /app
 
 COPY --from=builder /app/server .
 
-ENV FINNHUB_API_KEY=
 ENV TELEGRAM_TOKEN=
 
 EXPOSE 8080

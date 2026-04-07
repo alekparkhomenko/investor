@@ -14,7 +14,7 @@
 
 ## 1. Data Ingestor (упрощённый)
 
-* Подключение к WebSocket (например Finnhub)
+* Подключение к HTTP REST API (MOEX ISS)
 * Получение котировок
 * Парсинг JSON
 
@@ -50,13 +50,11 @@ type Alert struct {
 ## 4. Конфигурация
 
 * токен Telegram
-* API ключ (Finnhub)
 
 через env:
 
 ```bash
 TELEGRAM_TOKEN=xxx
-FINNHUB_API_KEY=xxx
 ```
 
 ---

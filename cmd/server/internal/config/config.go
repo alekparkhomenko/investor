@@ -5,13 +5,11 @@ import (
 )
 
 type Config struct {
-	FinnhubAPIKey string
 	TelegramToken string
 }
 
 func Load() *Config {
 	return &Config{
-		FinnhubAPIKey: getEnv("FINNHUB_API_KEY", ""),
 		TelegramToken: getEnv("TELEGRAM_TOKEN", ""),
 	}
 }
