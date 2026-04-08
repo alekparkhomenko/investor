@@ -1,132 +1,114 @@
 version: '3'
 
-output: group
-
 env:
   BIN_DIR: ./bin
-  CMD_DIR: ./cmd
 
 vars:
   APP_NAME: investor
-  SERVER_BIN: "{{.BIN_DIR}}/server"
+  GO_VERSION: '1.24'
+  GOLANGCI_LINT_VERSION: 'v2.1.5'
+  GCI_VERSION: 'v0.13.6'
+  GOFUMPT_VERSION: 'v0.8.0'
+  BUF_VERSION: '1.53.0'
+  PROTOC_GEN_GO_VERSION: 'v1.36.6'
+  PROTOC_GEN_GO_GRPC_VERSION: 'v1.5.1'
+  GRPCURL_VERSION: 'v1.9.3'
+  ENVSUBST_VERSION: 'v1.4.3'
+
+  BIN_DIR: '{{.ROOT_DIR}}/bin'
+  GOLANGCI_LINT: '{{.BIN_DIR}}/golangci-lint'
+  GCI: '{{.BIN_DIR}}/gci'
+  GOFUMPT: '{{.BIN_DIR}}/gofumpt'
+  BUF: '{{.BIN_DIR}}/buf'
+  PROTOC_GEN_GO: '{{.BIN_DIR}}/protoc-gen-go'
+  PROTOC_GEN_GO_GRPC: '{{.BIN_DIR}}/protoc-gen-go-grpc'
+  GRPCURL: '{{.BIN_DIR}}/grpcurl'
+  ENVSUBST: '{{.BIN_DIR}}/envsubst'
+  ENVDIR: '{{.ROOT_DIR}}/deploy/env'
+
+  MODULES: investor platform
 
 tasks:
-  deps:
-    desc: Download and tidy Go dependencies
+  install-formatters:
+    desc: "Устанавливает форматтеры gci и gofumpt в ./bin"
     cmds:
-      - go mod download
-      - go mod tidy
+      - |
+        [ -f {{.GOFUMPT}} ] || {
+          echo '📦 Устанавливаем gofumpt {{.GOFUMPT_VERSION}}...'
+          GOBIN={{.BIN_DIR}} go install mvdan.cc/gofumpt@{{.GOFUMPT_VERSION}}
+        }
+        [ -f {{.GCI}} ] || {
+          echo '📦 Устанавливаем gci {{.GCI_VERSION}}...'
+          GOBIN={{.BIN_DIR}} go install github.com/daixiang0/gci@{{.GCI_VERSION}}
+        }
+    status:
+      - test -x {{.GOFUMPT}}
+      - test -x {{.GCI}}
 
-  build:
-    desc: Build the server binary
-    dir: .
+  format:
+    desc: "Форматирует весь проект gofumpt + gci, исключая mocks"
+    deps: [ install-formatters ]
     cmds:
-      - go build -o {{.SERVER_BIN}} ./cmd/server
+      - |
+        echo "🧼 Форматируем через gofumpt ..."
+        
+        for module in {{.MODULES}}; do
+          if [ -d "$module" ]; then
+            echo "🧼 Форматируем $module"
+            find $module -type f -name '*.go' ! -path '*/mocks/*' -exec {{.GOFUMPT}} -extra -w {} +
+          fi
+        done
+      - |
+        echo "🎯 Сортируем импорты через gci ..."
+        
+        for module in {{.MODULES}}; do
+          if [ -d "$module" ]; then
+            echo "🎯 Сортируем импорты в $module"
+            find $module -type f -name '*.go' ! -path '*/mocks/*' -exec {{.GCI}} write -s standard -s default -s "prefix(github.com/olezhek28/microservices-course-examples/)" {} +
+          fi
+        done
 
-  build:all:
-    desc: Build all binaries
+  install-golangci-lint:
+    desc: "Устанавливает golangci-lint в каталог bin"
     cmds:
-      - task: build:server
-      - task: build:ingestor
-      - task: build:notifier
-      - task: build:alert-engine
-
-  build:server:
-    desc: Build server binary
-    cmds:
-      - go build -o {{.BIN_DIR}}/server ./cmd/server
-
-  build:ingestor:
-    desc: Build ingestor binary
-    cmds:
-      - go build -o {{.BIN_DIR}}/ingestor ./cmd/ingestor
-
-  build:notifier:
-    desc: Build notifier binary
-    cmds:
-      - go build -o {{.BIN_DIR}}/notifier ./cmd/notifier
-
-  build:alert-engine:
-    desc: Build alert-engine binary
-    cmds:
-      - go build -o {{.BIN_DIR}}/alert-engine ./cmd/alert-engine
-
-  run:
-    desc: Run the server
-    cmds:
-      - go run ./cmd/server
-
-  run:ingestor:
-    desc: Run the ingestor
-    cmds:
-      - go run ./cmd/ingestor
-
-  run:notifier:
-    desc: Run the notifier
-    cmds:
-      - go run ./cmd/notifier
-
-  run:alert-engine:
-    desc: Run the alert-engine
-    cmds:
-      - go run ./cmd/alert-engine
-
-  test:
-    desc: Run tests
-    cmds:
-      - go test -v ./...
-
-  test:unit:
-    desc: Run unit tests
-    cmds:
-      - go test -v ./...
+      - |
+        [ -f {{.GOLANGCI_LINT}} ] || {
+          mkdir -p {{.BIN_DIR}}
+          echo "📦 Устанавливаем golangci-lint {{.GOLANGCI_LINT_VERSION}}..."
+          GOBIN={{.BIN_DIR}} go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@{{.GOLANGCI_LINT_VERSION}}
+        }
+    status:
+      - test -x {{.GOLANGCI_LINT}}
 
   lint:
-    desc: Run linter (go vet)
+    desc: "Запускает golangci-lint для всех модулей"
+    deps: [ install-golangci-lint ]
+    vars:
+      MODULES: '{{.MODULES}}'
+      GOLANGCI_LINT: '{{.GOLANGCI_LINT}}'
     cmds:
-      - go vet ./...
+      - |
+        set -e
+        ERR=0
+        echo "🔍 Линтим все модули ..."
+        for mod in {{.MODULES}}; do
+          if [ -d "$mod" ]; then
+            echo "🔍 Линтим $mod module"
+            {{.GOLANGCI_LINT}} run $mod/... --config=.golangci.yml || ERR=1
+          fi
+        done
+        exit $ERR
 
-  fmt:
-    desc: Format code
+  deps:update:
+    desc: "Обновление зависимостей в go.mod во всех модулях"
     cmds:
-      - go fmt ./...
-
-  tidy:
-    desc: Tidy Go modules
-    cmds:
-      - go mod tidy
-
-  docker:build:
-    desc: Build Docker images
-    cmds:
-      - docker compose build
-
-  docker:up:
-    desc: Start services with Docker Compose
-    cmds:
-      - docker compose up -d
-
-  docker:down:
-    desc: Stop services
-    cmds:
-      - docker compose down
-
-  docker:logs:
-    desc: Show Docker logs
-    cmds:
-      - docker compose logs -f
-
-  docker:clean:
-    desc: Remove containers and volumes
-    cmds:
-      - docker compose down -v
-
-  clean:
-    desc: Clean build artifacts
-    cmds:
-      - rm -rf {{.BIN_DIR}}
-
-  help:
-    desc: Show this help message
-    cmds:
-      - task --list
+      - |
+        echo "🔄 Обновление зависимостей в go.work"
+        go work sync
+        echo "🔄 Обновление зависимостей в go.mod во всех модулях"
+        for mod in {{.MODULES}}; do
+          if [ -d "$mod" ]; then
+            echo "🔄 Обновление зависимостей в $mod"
+            (cd "$mod" && go mod tidy -compat=1.24) || exit 1
+          fi
+        done
