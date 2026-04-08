@@ -32,3 +32,6 @@ go.work.sum
 # .vscode/
 .env
 *.env.local
+
+# Tool binaries
+bin/

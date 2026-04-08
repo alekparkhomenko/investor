@@ -6,7 +6,7 @@
 
 У тебя будет **5 контейнеров**:
 
-1. `ingestor` — читает WebSocket, пишет в Kafka
+1. `ingestor` — читает HTTP REST API (MOEX ISS), пишет в Kafka
 2. `alert-engine` — читает из Kafka, проверяет условия
 3. `notifier` — отправляет в Telegram
 4. `kafka` — брокер сообщений
@@ -19,7 +19,7 @@
 # 🔄 Схема взаимодействия
 
 ```
-          WebSocket API (Finnhub)
+          HTTP REST API (MOEX ISS)
                     │
                     ▼
               [ ingestor ]
