@@ -1,0 +1,132 @@
+version: '3'
+
+output: group
+
+env:
+  BIN_DIR: ./bin
+  CMD_DIR: ./cmd
+
+vars:
+  APP_NAME: investor
+  SERVER_BIN: "{{.BIN_DIR}}/server"
+
+tasks:
+  deps:
+    desc: Download and tidy Go dependencies
+    cmds:
+      - go mod download
+      - go mod tidy
+
+  build:
+    desc: Build the server binary
+    dir: .
+    cmds:
+      - go build -o {{.SERVER_BIN}} ./cmd/server
+
+  build:all:
+    desc: Build all binaries
+    cmds:
+      - task: build:server
+      - task: build:ingestor
+      - task: build:notifier
+      - task: build:alert-engine
+
+  build:server:
+    desc: Build server binary
+    cmds:
+      - go build -o {{.BIN_DIR}}/server ./cmd/server
+
+  build:ingestor:
+    desc: Build ingestor binary
+    cmds:
+      - go build -o {{.BIN_DIR}}/ingestor ./cmd/ingestor
+
+  build:notifier:
+    desc: Build notifier binary
+    cmds:
+      - go build -o {{.BIN_DIR}}/notifier ./cmd/notifier
+
+  build:alert-engine:
+    desc: Build alert-engine binary
+    cmds:
+      - go build -o {{.BIN_DIR}}/alert-engine ./cmd/alert-engine
+
+  run:
+    desc: Run the server
+    cmds:
+      - go run ./cmd/server
+
+  run:ingestor:
+    desc: Run the ingestor
+    cmds:
+      - go run ./cmd/ingestor
+
+  run:notifier:
+    desc: Run the notifier
+    cmds:
+      - go run ./cmd/notifier
+
+  run:alert-engine:
+    desc: Run the alert-engine
+    cmds:
+      - go run ./cmd/alert-engine
+
+  test:
+    desc: Run tests
+    cmds:
+      - go test -v ./...
+
+  test:unit:
+    desc: Run unit tests
+    cmds:
+      - go test -v ./...
+
+  lint:
+    desc: Run linter (go vet)
+    cmds:
+      - go vet ./...
+
+  fmt:
+    desc: Format code
+    cmds:
+      - go fmt ./...
+
+  tidy:
+    desc: Tidy Go modules
+    cmds:
+      - go mod tidy
+
+  docker:build:
+    desc: Build Docker images
+    cmds:
+      - docker compose build
+
+  docker:up:
+    desc: Start services with Docker Compose
+    cmds:
+      - docker compose up -d
+
+  docker:down:
+    desc: Stop services
+    cmds:
+      - docker compose down
+
+  docker:logs:
+    desc: Show Docker logs
+    cmds:
+      - docker compose logs -f
+
+  docker:clean:
+    desc: Remove containers and volumes
+    cmds:
+      - docker compose down -v
+
+  clean:
+    desc: Clean build artifacts
+    cmds:
+      - rm -rf {{.BIN_DIR}}
+
+  help:
+    desc: Show this help message
+    cmds:
+      - task --list
