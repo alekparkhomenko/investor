@@ -112,3 +112,43 @@ tasks:
             (cd "$mod" && go mod tidy -compat=1.24) || exit 1
           fi
         done
+
+  run:
+    desc: "Запускает investor локально"
+    cmds:
+      - |
+        echo "🚀 Запускаем investor..."
+        go run ./investor/cmd/main.go
+
+  docker:build:
+    desc: "Собирает Docker образ"
+    cmds:
+      - |
+        echo "🐳 Собираем Docker образ..."
+        docker build -t investor:latest -f investor/Dockerfile .
+
+  docker:up:
+    desc: "Запускает проект через docker-compose"
+    deps: [ docker:build ]
+    cmds:
+      - |
+        echo "🐳 Запускаем через docker-compose..."
+        docker-compose up -d
+
+  docker:down:
+    desc: "Останавливает проект через docker-compose"
+    cmds:
+      - |
+        echo "🐳 Останавливаем docker-compose..."
+        docker-compose down
+
+  docker:restart:
+    desc: "Перезапускает проект через docker-compose"
+    deps: [ docker:down, docker:up ]
+    cmds:
+      - echo "🔄 Перезапуск завершён"
+
+  docker:logs:
+    desc: "Показывает логи docker-compose"
+    cmds:
+      - docker-compose logs -f

@@ -1,12 +1,10 @@
 version: '3.9'
 
 services:
-  server:
+  investor:
     build:
       context: .
-      dockerfile: cmd/server/Dockerfile
-    ports:
-      - "8080:8080"
-    environment:
-      - TELEGRAM_TOKEN=${TELEGRAM_TOKEN}
+      dockerfile: investor/Dockerfile
+    env_file:
+      - .env
     restart: on-failure
