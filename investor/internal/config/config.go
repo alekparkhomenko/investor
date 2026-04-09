@@ -8,9 +8,9 @@ import (
 	"github.com/alekparkhomenko/investor/investor/internal/config/env"
 )
 
-var appConfig *config
+var appConfig *Config
 
-type config struct {
+type Config struct {
 	App    AppSettings
 	Logger LoggerSettings
 }
@@ -31,7 +31,7 @@ func Load() error {
 		return err
 	}
 
-	appConfig = &config{
+	appConfig = &Config{
 		App:    appCfg,
 		Logger: loggerCfg,
 	}
@@ -39,6 +39,6 @@ func Load() error {
 	return nil
 }
 
-func AppConfig() *config {
+func AppConfig() *Config {
 	return appConfig
 }
