@@ -1,7 +1,7 @@
 ---
 mode: subagent
 description: Агент-исполнитель — выполняет план, утверждённый пользователем
-model: openai/gpt-4o-mini
+model: opencode/minimax-m2.5-free
 tools:
   read: true
   write: true
