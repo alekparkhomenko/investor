@@ -1,7 +1,7 @@
 ---
 mode: subagent
 description: Агент планирования - анализирует задачу и строит план выполнения
-model: anthropic/claude-sonnet-4-20250514
+model: openai/gpt-4o-mini
 tools:
   read: true
   write: false
