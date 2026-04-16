@@ -1,7 +1,7 @@
 ---
 mode: primary
 description: Агент-координатор — управляет workflow между планировщиком и исполнителем
-model: anthropic/claude-sonnet-4-20250514
+model: openai/gpt-4o-mini
 tools:
   read: true
   write: false
