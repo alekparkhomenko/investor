@@ -1,7 +1,7 @@
 ---
 mode: subagent
 description: Агент-исполнитель — выполняет план, утверждённый пользователем
-model: anthropic/claude-sonnet-4-20250514
+model: openai/gpt-4o-mini
 tools:
   read: true
   write: true
