@@ -1,7 +1,7 @@
 ---
 mode: subagent
 description: Агент планирования - анализирует задачу и строит план выполнения
-model: openai/gpt-4o-mini
+model: opencode/minimax-m2.5-free
 tools:
   read: true
   write: false
