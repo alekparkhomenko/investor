@@ -1,7 +1,7 @@
 ---
 mode: subagent
 description: Агент планирования - анализирует задачу и строит план выполнения
-model: opencode/minimax-m2.5-free
+model: glm-4.7-free
 tools:
   read: true
   write: false

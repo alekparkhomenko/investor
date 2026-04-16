@@ -1,7 +1,7 @@
 ---
 mode: subagent
 description: Агент-исполнитель — выполняет план, утверждённый пользователем
-model: opencode/minimax-m2.5-free
+model: glm-4.7-free
 tools:
   read: true
   write: true
