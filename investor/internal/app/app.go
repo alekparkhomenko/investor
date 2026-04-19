@@ -2,7 +2,6 @@ package app
 
 import (
 	"context"
-	"fmt"
 	"os"
 
 	"github.com/alekparkhomenko/investor/investor/internal/config"
@@ -36,26 +35,45 @@ func NewApp(cfg *config.Config, ing ingestor.Ingestor, log *logger.Logger) *App 
 }
 
 func (a *App) Run(ctx context.Context) error {
-	if err := metrics.WritePID(a.pidFile); err != nil {
-		fmt.Println("WARNING: failed to write PID file:", err)
+	// Write PID file with optional logging
+	if err := metrics.WritePID(a.pidFile, a.log); err != nil {
+		a.log.Warn(ctx, "failed to write PID file", logger.Fields{
+			"component": "app",
+			"error":     err.Error(),
+			"pid_file":  a.pidFile,
+		})
 	}
 
-	fmt.Println("[APP] Starting investor with symbols:", a.cfg.App.Symbols())
+	a.log.Info(ctx, "starting investor", logger.Fields{
+		"component": "app",
+		"symbols":   a.cfg.App.Symbols(),
+	})
 
 	go func() {
 		for {
 			select {
 			case quotes, ok := <-a.quotesCh:
 				if !ok {
-					fmt.Println("[APP] quotes channel closed")
+					a.log.Info(ctx, "quotes channel closed", logger.Fields{
+						"component": "app",
+					})
 					return
 				}
-				fmt.Printf("[APP] received %d quotes:\n", len(quotes))
+				a.log.Info(ctx, "received quotes", logger.Fields{
+					"component": "app",
+					"count":     len(quotes),
+				})
 				for _, q := range quotes {
-					fmt.Printf("[APP]   %s: %.2f\n", q.Symbol, q.Price)
+					a.log.Debug(ctx, "quote received", logger.Fields{
+						"component": "app",
+						"symbol":    q.Symbol,
+						"price":     q.Price,
+					})
 				}
 			case <-ctx.Done():
-				fmt.Println("[APP] context cancelled, stopping")
+				a.log.Info(ctx, "context cancelled, stopping", logger.Fields{
+					"component": "app",
+				})
 				return
 			}
 		}
@@ -69,7 +87,9 @@ func (a *App) Run(ctx context.Context) error {
 }
 
 func (a *App) Stop() error {
-	fmt.Println("[APP] Stopping investor")
+	a.log.Info(context.Background(), "stopping investor", logger.Fields{
+		"component": "app",
+	})
 
 	if a.ing != nil {
 		a.ing.Stop()
@@ -80,7 +100,13 @@ func (a *App) Stop() error {
 	}
 
 	if a.pidFile != "" {
-		os.Remove(a.pidFile)
+		if err := os.Remove(a.pidFile); err != nil {
+			a.log.Warn(context.Background(), "failed to remove PID file", logger.Fields{
+				"component": "app",
+				"error":     err.Error(),
+				"pid_file":  a.pidFile,
+			})
+		}
 	}
 
 	return nil

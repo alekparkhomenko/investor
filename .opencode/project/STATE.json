@@ -116,11 +116,11 @@
   },
   
   "execution": {
-    "current_task": "LOKI-002",
+    "current_task": "LOKI-003",
     "tasks": [
       {"id": "LOKI-001", "status": "completed", "started_at": "2026-04-19T23:10:00Z", "completed_at": "2026-04-19T23:30:00Z"},
-      {"id": "LOKI-002", "status": "in_progress", "started_at": "2026-04-19T23:30:00Z"},
-      {"id": "LOKI-003", "status": "pending"},
+      {"id": "LOKI-002", "status": "completed", "started_at": "2026-04-19T23:30:00Z", "completed_at": "2026-04-19T23:45:00Z"},
+      {"id": "LOKI-003", "status": "in_progress", "started_at": "2026-04-19T23:45:00Z"},
       {"id": "LOKI-004", "status": "pending"},
       {"id": "LOKI-005", "status": "pending"},
       {"id": "LOKI-006", "status": "pending"},
@@ -128,12 +128,12 @@
       {"id": "LOKI-008", "status": "pending"},
       {"id": "LOKI-009", "status": "pending"}
     ],
-    "completed_tasks": ["LOKI-001"],
-    "pending_tasks": ["LOKI-003", "LOKI-004", "LOKI-005", "LOKI-006", "LOKI-007", "LOKI-008", "LOKI-009"],
+    "completed_tasks": ["LOKI-001", "LOKI-002"],
+    "pending_tasks": ["LOKI-004", "LOKI-005", "LOKI-006", "LOKI-007", "LOKI-008", "LOKI-009"],
     "blocked_tasks": [],
     "stats": {
       "total": 9,
-      "completed": 1,
+      "completed": 2,
       "in_progress": 1,
       "blocked": 0
     }
