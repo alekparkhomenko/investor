@@ -184,11 +184,22 @@ func (m *MOEXIngestor) fetchQuotes(ctx context.Context) ([]model.Quote, error) {
 	}
 
 	duration := time.Since(start).Milliseconds()
-	m.log.Debug(ctx, "quotes parsed successfully", logger.Fields{
-		"component":   "moex-ingestor",
-		"duration_ms": duration,
-		"url":         url,
-	})
+	
+	// Log slow requests as warnings
+	if duration > 1000 {
+		m.log.Warn(ctx, "slow MOEX response", logger.Fields{
+			"component":   "moex-ingestor",
+			"duration_ms": duration,
+			"url":         url,
+			"threshold_ms": 1000,
+		})
+	} else {
+		m.log.Debug(ctx, "quotes parsed successfully", logger.Fields{
+			"component":   "moex-ingestor",
+			"duration_ms": duration,
+			"url":         url,
+		})
+	}
 
 	return parseQuotes(issResp, m.requiredSymbols)
 }

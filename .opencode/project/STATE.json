@@ -116,24 +116,24 @@
   },
   
   "execution": {
-    "current_task": "LOKI-004",
+    "current_task": "LOKI-007",
     "tasks": [
       {"id": "LOKI-001", "status": "completed", "started_at": "2026-04-19T23:10:00Z", "completed_at": "2026-04-19T23:30:00Z"},
       {"id": "LOKI-002", "status": "completed", "started_at": "2026-04-19T23:30:00Z", "completed_at": "2026-04-19T23:45:00Z"},
       {"id": "LOKI-003", "status": "completed", "started_at": "2026-04-19T23:45:00Z", "completed_at": "2026-04-20T00:00:00Z"},
-      {"id": "LOKI-004", "status": "in_progress", "started_at": "2026-04-20T00:00:00Z"},
-      {"id": "LOKI-005", "status": "pending"},
-      {"id": "LOKI-006", "status": "pending"},
-      {"id": "LOKI-007", "status": "pending"},
+      {"id": "LOKI-004", "status": "completed", "started_at": "2026-04-20T00:00:00Z", "completed_at": "2026-04-20T00:05:00Z"},
+      {"id": "LOKI-005", "status": "completed", "started_at": "2026-04-20T00:05:00Z", "completed_at": "2026-04-20T00:10:00Z"},
+      {"id": "LOKI-006", "status": "completed", "started_at": "2026-04-20T00:10:00Z", "completed_at": "2026-04-20T00:20:00Z"},
+      {"id": "LOKI-007", "status": "in_progress", "started_at": "2026-04-20T00:20:00Z"},
       {"id": "LOKI-008", "status": "pending"},
       {"id": "LOKI-009", "status": "pending"}
     ],
-    "completed_tasks": ["LOKI-001", "LOKI-002", "LOKI-003"],
-    "pending_tasks": ["LOKI-005", "LOKI-006", "LOKI-007", "LOKI-008", "LOKI-009"],
+    "completed_tasks": ["LOKI-001", "LOKI-002", "LOKI-003", "LOKI-004", "LOKI-005", "LOKI-006"],
+    "pending_tasks": ["LOKI-008", "LOKI-009"],
     "blocked_tasks": [],
     "stats": {
       "total": 9,
-      "completed": 3,
+      "completed": 6,
       "in_progress": 1,
       "blocked": 0
     }
