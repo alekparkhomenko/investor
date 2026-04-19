@@ -13,8 +13,6 @@ import (
 	"time"
 
 	"github.com/alekparkhomenko/investor/investor/internal/model"
-	"github.com/alekparkhomenko/investor/platform/pkg/logger"
-	"go.uber.org/zap"
 )
 
 const (
@@ -51,31 +49,35 @@ func (m *MOEXIngestor) Start(ctx context.Context, interval time.Duration, out ch
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 
-	log := logger.With(zap.String("component", "moex-ingestor"))
+	fmt.Println("[MOEX] Starting ingestor")
 
 	for {
 		select {
 		case <-ctx.Done():
-			log.Info(ctx, "stopped via context")
+			fmt.Println("[MOEX] stopped via context")
 			return
 		case <-m.done:
-			log.Info(ctx, "stopped via Stop()")
+			fmt.Println("[MOEX] stopped via Stop()")
 			return
 		case <-ticker.C:
+			fmt.Println("[MOEX] fetching quotes...")
 		}
 
 		quotes, err := m.fetchQuotes(ctx)
 		if err != nil {
-			log.Error(ctx, "fetch error", zap.Error(err))
+			fmt.Println("[MOEX] fetch error:", err)
 			continue
 		}
 		if len(quotes) > 0 {
+			fmt.Printf("[MOEX] fetched %d quotes\n", len(quotes))
 			select {
 			case out <- quotes:
 			case <-ctx.Done():
 			case <-m.done:
 				return
 			}
+		} else {
+			fmt.Println("[MOEX] no quotes fetched")
 		}
 	}
 }
@@ -101,6 +103,7 @@ func (m *MOEXIngestor) fetchQuotes(ctx context.Context) ([]model.Quote, error) {
 	}(), ",")
 
 	url := fmt.Sprintf("%s/securities.json?secid=%s", BaseURL, symbolsParam)
+	fmt.Println("[MOEX] URL:", url)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
@@ -136,6 +139,8 @@ func (m *MOEXIngestor) fetchQuotes(ctx context.Context) ([]model.Quote, error) {
 func parseQuotes(resp model.ISSResponse, requiredSymbols map[string]bool) ([]model.Quote, error) {
 	columns := resp.MarketData.Columns
 	data := resp.MarketData.Data
+
+	fmt.Printf("[MOEX] parseQuotes: columns=%d, rows=%d\n", len(columns), len(data))
 
 	secidIdx := -1
 	boardIdx := -1
