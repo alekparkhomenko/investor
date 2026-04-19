@@ -1,6 +1,10 @@
 package config
 
-import "time"
+import (
+	"time"
+
+	"github.com/alekparkhomenko/investor/platform/pkg/logger"
+)
 
 type AppSettings interface {
 	Symbols() string
@@ -13,4 +17,5 @@ type LoggerSettings interface {
 	LokiHost() string
 	LokiEnv() string
 	LokiEnabled() bool
+	ToPlatformLoggerConfig() logger.Config
 }

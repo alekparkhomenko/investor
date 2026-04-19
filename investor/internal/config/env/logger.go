@@ -4,6 +4,8 @@ import (
 	"os"
 
 	"github.com/caarlos0/env/v11"
+
+	"github.com/alekparkhomenko/investor/platform/pkg/logger"
 )
 
 type loggerEnvConfig struct {
@@ -55,4 +57,15 @@ func (c *loggerConfig) LokiEnabled() bool {
 		return false
 	}
 	return c.raw.LokiEnabled
+}
+
+// ToPlatformLoggerConfig converts to platform logger config.
+func (c *loggerConfig) ToPlatformLoggerConfig() logger.Config {
+	return logger.Config{
+		LokiEnabled: c.LokiEnabled(),
+		LokiHost:    c.LokiHost(),
+		LokiEnv:     c.LokiEnv(),
+		AppName:     "investor",
+		AppVersion:  "1.0.0",
+	}
 }

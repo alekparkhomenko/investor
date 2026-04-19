@@ -1,7 +1,7 @@
 ---
 mode: primary
 description: Агент-координатор — управляет workflow между планировщиком и исполнителем
-model: glm-4.7-free
+model: opencode/minimax-m2.5-free
 tools:
   read: true
   write: false

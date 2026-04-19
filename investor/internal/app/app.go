@@ -9,6 +9,7 @@ import (
 	"github.com/alekparkhomenko/investor/investor/internal/ingestor"
 	"github.com/alekparkhomenko/investor/investor/internal/metrics"
 	"github.com/alekparkhomenko/investor/investor/internal/model"
+	"github.com/alekparkhomenko/investor/platform/pkg/logger"
 )
 
 type App struct {
@@ -16,9 +17,10 @@ type App struct {
 	ing      ingestor.Ingestor
 	quotesCh chan []model.Quote
 	pidFile  string
+	log      *logger.Logger
 }
 
-func NewApp(cfg *config.Config, ing ingestor.Ingestor) *App {
+func NewApp(cfg *config.Config, ing ingestor.Ingestor, log *logger.Logger) *App {
 	pidFile := "/tmp/investor.pid"
 	if p := os.Getenv("PID_FILE"); p != "" {
 		pidFile = p
@@ -29,6 +31,7 @@ func NewApp(cfg *config.Config, ing ingestor.Ingestor) *App {
 		ing:      ing,
 		quotesCh: make(chan []model.Quote, 100),
 		pidFile:  pidFile,
+		log:      log,
 	}
 }
 

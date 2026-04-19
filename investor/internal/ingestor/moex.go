@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/alekparkhomenko/investor/investor/internal/model"
+	"github.com/alekparkhomenko/investor/platform/pkg/logger"
 )
 
 const (
@@ -25,9 +26,10 @@ type MOEXIngestor struct {
 	done            chan struct{}
 	mu              sync.Mutex
 	stopped         bool
+	log             *logger.Logger
 }
 
-func NewMOEXIngestor(symbols string) *MOEXIngestor {
+func NewMOEXIngestor(symbols string, log *logger.Logger) *MOEXIngestor {
 	symbolsMap := make(map[string]bool)
 	for _, s := range strings.Split(symbols, ",") {
 		s = strings.TrimSpace(s)
@@ -42,6 +44,7 @@ func NewMOEXIngestor(symbols string) *MOEXIngestor {
 		},
 		requiredSymbols: symbolsMap,
 		done:            make(chan struct{}),
+		log:             log,
 	}
 }
 
