@@ -17,7 +17,8 @@ import (
 )
 
 const (
-	BaseURL = "https://iss.moex.com/iss/engines/stock/markets/shares"
+	BaseURL            = "https://iss.moex.com/iss/engines/stock/markets/shares"
+	noQuotesLogInterval = 30 * time.Second // Sampling interval for "no quotes" logs
 )
 
 type MOEXIngestor struct {
@@ -27,6 +28,7 @@ type MOEXIngestor struct {
 	mu              sync.Mutex
 	stopped         bool
 	log             *logger.Logger
+	lastNoQuotesLog sync.Map // map[string]time.Time - sampling for high-frequency logs
 }
 
 func NewMOEXIngestor(symbols string, log *logger.Logger) *MOEXIngestor {
@@ -94,11 +96,35 @@ func (m *MOEXIngestor) Start(ctx context.Context, interval time.Duration, out ch
 				return
 			}
 		} else {
-			m.log.Warn(ctx, "no quotes fetched", logger.Fields{
-				"component": "moex-ingestor",
-			})
+			m.logNoQuotes(ctx)
 		}
 	}
+}
+
+// logNoQuotes logs "no quotes fetched" with rate limiting to prevent log spam.
+// Logs at most once per noQuotesLogInterval (30 seconds).
+func (m *MOEXIngestor) logNoQuotes(ctx context.Context) {
+	logKey := "no_quotes"
+	now := time.Now()
+	
+	// Check if we logged this recently
+	if lastLog, ok := m.lastNoQuotesLog.Load(logKey); ok {
+		if lastLogTime, ok := lastLog.(time.Time); ok {
+			if now.Sub(lastLogTime) < noQuotesLogInterval {
+				// Skip logging - too soon
+				return
+			}
+		}
+	}
+	
+	// Store the new log time
+	m.lastNoQuotesLog.Store(logKey, now)
+	
+	m.log.Warn(ctx, "no quotes fetched", logger.Fields{
+		"component": "moex-ingestor",
+		"sampled":   true,
+		"interval":  noQuotesLogInterval.String(),
+	})
 }
 
 func (m *MOEXIngestor) Stop() {
