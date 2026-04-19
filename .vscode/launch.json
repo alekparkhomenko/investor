@@ -1,0 +1,19 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Investor",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "program": "${workspaceFolder}/investor/cmd",
+            "env": {
+                "SYMBOLS": "SBER,GAZP,MOEX",
+                "POLL_INTERVAL": "4s",
+                "LOG_LEVEL": "info",
+                "LOG_AS_JSON": "false"
+            },
+            "cwd": "${workspaceFolder}/investor"
+        }
+    ]
+}

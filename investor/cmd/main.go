@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
 	"os/signal"
 	"syscall"
 	"time"
@@ -10,6 +11,7 @@ import (
 	"github.com/alekparkhomenko/investor/investor/internal/app"
 	"github.com/alekparkhomenko/investor/investor/internal/config"
 	"github.com/alekparkhomenko/investor/investor/internal/ingestor"
+	"github.com/alekparkhomenko/investor/investor/internal/logger"
 	"github.com/alekparkhomenko/investor/platform/pkg/closer"
 )
 
@@ -21,13 +23,29 @@ func main() {
 
 	cfg := config.AppConfig()
 
-	fmt.Println("Starting investor with symbols:", cfg.App.Symbols())
+	// Initialize logger
+	appLogger, err := logger.New(cfg)
+	if err != nil {
+		log.Printf("Warning: failed to initialize logger: %v", err)
+	}
+	if appLogger != nil {
+		defer appLogger.Close()
+	}
+
+	log.Println("Starting investor with symbols:", cfg.App.Symbols())
 
 	ing := ingestor.NewMOEXIngestor(cfg.App.Symbols())
 	a := app.NewApp(cfg, ing)
 
 	closer.AddNamed("app", func(ctx context.Context) error {
 		return a.Stop()
+	})
+
+	closer.AddNamed("logger", func(ctx context.Context) error {
+		if appLogger != nil {
+			return appLogger.Close()
+		}
+		return nil
 	})
 
 	appCtx, appCancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)

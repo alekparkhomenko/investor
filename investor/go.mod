@@ -2,7 +2,7 @@ module github.com/alekparkhomenko/investor/investor
 
 replace github.com/alekparkhomenko/investor/platform => ../plantform
 
-go 1.25.1
+go 1.25.7
 
 require (
 	github.com/alekparkhomenko/investor/platform v0.0.0
@@ -12,5 +12,6 @@ require (
 
 require (
 	github.com/caarlos0/env/v11 v11.4.0 // indirect
+	github.com/edaniel30/loki-logger-go v0.6.4 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 )

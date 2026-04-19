@@ -1,5 +1,7 @@
 # 🏗️ Architecture Agent
 
+> **ВАЖНО: Может → Проектировать ARCHITECTURE.md. Не может → Писать код, реализовывать.**
+
 ## 🎯 Role
 
 Architecture Agent designs the system structure, technology stack, and component interactions based on the approved execution plan.
