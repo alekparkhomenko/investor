@@ -1,24 +1,25 @@
-FROM golang:1.21-alpine AS builder
+FROM golang:1.25-alpine AS builder
 
 WORKDIR /app
 
-COPY go.mod ./
+COPY go.mod go.sum ./
+COPY investor/go.mod investor/go.sum ./
+
 RUN go mod download
 
-COPY . .
+COPY investor/ ./investor/
+COPY plantform/ ./plantform/
 
-RUN CGO_ENABLED=0 GOOS=linux go build -o investor ./cmd/investor
+RUN CGO_ENABLED=0 GOOS=linux go build -o /investor ./investor/cmd/main.go
 
 FROM alpine:3.19
 
 RUN apk --no-cache add ca-certificates
 
-WORKDIR /app
+COPY --from=builder /investor /investor
 
-COPY --from=builder /app/investor .
+ENV POLL_INTERVAL=2s
+ENV SYMBOLS=SBER,GAZP,MOEX
+ENV LOG_LEVEL=info
 
-ENV KAFKA_BROKER=localhost:9092
-
-EXPOSE 8080
-
-CMD ["./ingestor"]
+ENTRYPOINT ["/investor"]
