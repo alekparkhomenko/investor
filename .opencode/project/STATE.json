@@ -1,0 +1,186 @@
+{
+  "_comment": "AI Multi-Agent System - Single Source of Truth",
+  "version": "1.0.0",
+  "schema_version": "1.0",
+  "created_at": "2026-01-15T00:00:00Z",
+  "updated_at": "2026-01-15T00:00:00Z",
+  
+  "system": {
+    "name": "ai-multi-agent-system",
+    "description": "AI-driven software development system",
+    "project_type": "software",
+    "language": "go"
+  },
+  
+  "current_phase": "INIT",
+  "phase_history": [],
+  
+  "phases": {
+    "INIT": {
+      "description": "System initialization",
+      "next": "PRODUCT_DEFINITION",
+      "completion_criteria": ["system_initialized"]
+    },
+    "PRODUCT_DEFINITION": {
+      "description": "Product Owner creates product artifacts",
+      "next": "PLANNING",
+      "completion_criteria": [
+        "PRODUCT_VISION.md exists",
+        "ROADMAP.md exists",
+        "MVP_SPEC.md exists",
+        "BACKLOG.md exists"
+      ]
+    },
+    "PLANNING": {
+      "description": "Planner creates execution plan",
+      "next": "APPROVAL_PENDING",
+      "completion_criteria": ["EXECUTION_PLAN.md created"]
+    },
+    "APPROVAL_PENDING": {
+      "description": "Waiting for human approval",
+      "next": "ARCHITECTURE",
+      "completion_criteria": ["Human approved execution plan"],
+      "is_gate": true
+    },
+    "ARCHITECTURE": {
+      "description": "Architecture agent designs system",
+      "next": "IMPLEMENTATION",
+      "completion_criteria": ["ARCHITECTURE.md created"]
+    },
+    "IMPLEMENTATION": {
+      "description": "Backend agent implements code",
+      "next": "COMPLETED",
+      "completion_criteria": ["All tasks complete", "All reviews passed"]
+    },
+    "COMPLETED": {
+      "description": "Project successfully completed",
+      "next": null,
+      "completion_criteria": []
+    }
+  },
+  
+  "product": {
+    "current_phase": "MVP",
+    "vision": { "version": "0.0.0", "status": "NOT_CREATED", "path": "product/PRODUCT_VISION.md" },
+    "roadmap": { "version": "0.0.0", "status": "NOT_CREATED", "path": "product/ROADMAP.md" },
+    "mvp_spec": { "version": "0.0.0", "status": "NOT_CREATED", "path": "product/MVP_SPEC.md" },
+    "backlog": { "version": "0.0.0", "status": "NOT_CREATED", "path": "product/BACKLOG.md" }
+  },
+  
+  "plan": {
+    "version": "0.0.0",
+    "status": "NOT_CREATED",
+    "path": "project/EXECUTION_PLAN.md",
+    "created_at": null,
+    "approval": {
+      "status": "NOT_REQUIRED",
+      "approved_at": null,
+      "approved_by": null,
+      "comments": null
+    },
+    "metadata": {
+      "total_tasks": 0,
+      "completed_tasks": 0,
+      "pending_tasks": 0,
+      "blocked_tasks": 0
+    },
+    "tasks": []
+  },
+  
+  "architecture": {
+    "version": "0.0.0",
+    "status": "NOT_CREATED",
+    "path": "project/ARCHITECTURE.md",
+    "immutable": true,
+    "created_at": null,
+    "last_modified": null,
+    "modification_history": []
+  },
+  
+  "execution": {
+    "current_task": null,
+    "tasks": [],
+    "completed_tasks": [],
+    "pending_tasks": [],
+    "blocked_tasks": [],
+    "stats": {
+      "total": 0,
+      "completed": 0,
+      "in_progress": 0,
+      "blocked": 0
+    }
+  },
+  
+  "review": {
+    "current_loop": 0,
+    "max_loops": 3,
+    "loop_history": [],
+    "last_review": {
+      "task_id": null,
+      "cycle": 0,
+      "result": null,
+      "feedback": null,
+      "at": null
+    },
+    "escalation": {
+      "required": false,
+      "reason": null,
+      "escalated_at": null
+    }
+  },
+  
+  "agents": {
+    "product_owner": { "status": "idle", "current_task": null, "last_active": null },
+    "planner": { "status": "idle", "current_task": null, "last_active": null },
+    "orchestrator": { "status": "idle", "current_task": null, "last_active": null },
+    "architecture": { "status": "idle", "current_task": null, "last_active": null },
+    "backend": { "status": "idle", "current_task": null, "last_active": null },
+    "reviewer": { "status": "idle", "current_task": null, "last_active": null }
+  },
+  
+  "skills": {
+    "registry_path": "project/SKILLS_INDEX.md",
+    "available_count": 0,
+    "used_count": 0,
+    "used_skills": [],
+    "missing_required": [],
+    "duplicates_created": []
+  },
+  
+  "violations": {
+    "count": 0,
+    "critical": 0,
+    "high": 0,
+    "medium": 0,
+    "low": 0,
+    "items": []
+  },
+  
+  "decisions": {
+    "count": 0,
+    "path": "project/DECISIONS.md",
+    "items": []
+  },
+  
+  "human_interventions": {
+    "count": 0,
+    "items": []
+  },
+  
+  "metrics": {
+    "start_time": null,
+    "elapsed_hours": 0,
+    "review_cycles_total": 0,
+    "average_review_cycles": 0,
+    "tasks_completed_per_day": 0
+  },
+  
+  "config": {
+    "review_max_loops": 3,
+    "min_test_coverage": 80,
+    "auto_escalate_after_max_loops": true,
+    "require_human_approval": true,
+    "architecture_immutable": true,
+    "enforce_skill_reuse": true
+  }
+}
