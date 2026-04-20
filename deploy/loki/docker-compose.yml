@@ -68,8 +68,8 @@ services:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=admin
       - GF_USERS_ALLOW_SIGN_UP=false
-      # Alerting configuration
-      - GF_ALERTING_ENABLED=true
+      # Alerting configuration (unified alerting only - legacy disabled)
+      - GF_ALERTING_ENABLED=false
       - GF_UNIFIED_ALERTING_ENABLED=true
       - GF_ALERTING_MAX_ATTEMPTS=5
       # Telegram notification (optional - set in .env file)

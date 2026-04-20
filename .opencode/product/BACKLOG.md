@@ -134,15 +134,35 @@ Reusable skills registry for engineering agents.
 
 ---
 
+---
+
+## P2 - Future Enhancements
+
+### 9. Telegram Alerting with Grafana
+**SP:** 5 | **Deps:** None (See GitHub Issue #14)
+
+**Description:**
+Integrate Grafana alerting with Telegram bot for real-time notifications.
+
+**Acceptance:**
+- Telegram bot receives alerts from Grafana
+- Alert rules for critical metrics (health, errors, latency)
+- Notification routing by severity
+
+**Skills:** grafana-alerting, telegram-integration, observability
+
+---
+
 ## Summary
 
 | Priority | Count | Story Points |
 |----------|-------|--------------|
 | P0 | 8 | 36 |
-| **Total** | **8** | **36** |
+| P2 | 1 | 5 |
+| **Total** | **9** | **41** |
 
-**Estimated Duration:** 4-6 weeks
+**Estimated Duration:** 4-6 weeks (P0)
 
 ---
 
-**Version:** 1.1 | **Last Updated:** 2026-04-20
+**Version:** 1.2 | **Last Updated:** 2026-04-20

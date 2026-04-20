@@ -20,22 +20,13 @@ contactPoints:
             Runbook: {{ .Annotations.runbook_url }}
             {{ end }}
 
-      # Telegram notification channel (requires Telegram bot setup)
-      # To enable: create a bot via @BotFather, get token, add to group/channel
-      - uid: telegram-receiver
-        type: telegram
-        settings:
-          bottoken: ${TELEGRAM_BOT_TOKEN}
-          chatid: ${TELEGRAM_CHAT_ID}
-          disable_notifications: false
-          message: |
-            🚨 *Alert: {{ .Annotations.summary }}*
-            
-            *Severity:* {{ .Labels.severity }}
-            *Component:* {{ .Labels.component }}
-            *Description:* {{ .Annotations.description }}
-            
-            [Runbook]({{ .Annotations.runbook_url }})
+      # Telegram notification channel (disabled - requires Telegram bot setup)
+      # To enable: create a bot via @BotFather, get token, add to TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID to docker-compose.yml
+      # - uid: telegram-receiver
+      #   type: telegram
+      #   settings:
+      #     bottoken: ${TELEGRAM_BOT_TOKEN}
+      #     chatid: ${TELEGRAM_CHAT_ID}
 
 # Notification policies
 # Documentation: https://grafana.com/docs/grafana/latest/alerting/set-up/provision-alerting-resources/#provision-notification-policies

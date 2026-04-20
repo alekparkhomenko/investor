@@ -153,7 +153,7 @@
             "type": "loki",
             "uid": "loki"
           },
-          "expr": "sum by (level) (count_over_time({app=\"investor\"} | json [5m]))",
+          "expr": "sum by (level) (count_over_time({app=\"investor\"}[5m]))",
           "legendFormat": "{{level}}",
           "refId": "A"
         }
@@ -211,7 +211,7 @@
             "type": "loki",
             "uid": "loki"
           },
-          "expr": "{app=\"investor\"} | json | level=~\"$level\"",
+          "expr": "{app=\"investor\"} | level=~\"$level\"",
           "legendFormat": "",
           "refId": "A"
         }
@@ -312,7 +312,7 @@
             "type": "loki",
             "uid": "loki"
           },
-          "expr": "quantile_over_time(0.95, {app=\"investor\"} | json | duration_ms > 0 [5m])",
+          "expr": "quantile_over_time(0.95, {app=\"investor\"} | duration_ms > 0 [5m])",
           "legendFormat": "p95 duration",
           "refId": "A"
         },
@@ -321,7 +321,7 @@
             "type": "loki",
             "uid": "loki"
           },
-          "expr": "quantile_over_time(0.50, {app=\"investor\"} | json | duration_ms > 0 [5m])",
+          "expr": "quantile_over_time(0.50, {app=\"investor\"} | duration_ms > 0 [5m])",
           "legendFormat": "p50 duration",
           "refId": "B"
         }
@@ -409,7 +409,7 @@
             "type": "loki",
             "uid": "loki"
           },
-          "expr": "{app=\"investor\"} | json | duration_ms > 100 | line_format \"{{.component}} - {{.msg}} - {{.duration_ms}}ms\"",
+          "expr": "{app=\"investor\"} | duration_ms > 100 | line_format \"{{.component}} - {{.msg}} - {{.duration_ms}}ms\"",
           "legendFormat": "",
           "refId": "A"
         }
