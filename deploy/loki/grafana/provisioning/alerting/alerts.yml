@@ -1,0 +1,221 @@
+apiVersion: 1
+
+# Alert rules for Loki Stack monitoring
+# These rules are provisioned via Grafana's alerting provisioning
+# Documentation: https://grafana.com/docs/grafana/latest/alerting/set-up/provision-alerting-resources/
+
+groups:
+  # =============================================================================
+  # LOKI INFRASTRUCTURE ALERTS
+  # =============================================================================
+  - name: loki-infrastructure
+    folder: Loki
+    interval: 30s
+    rules:
+      # -------------------------------------------------------------------------
+      # Loki Down (Critical)
+      # Triggered when Loki health check fails
+      # -------------------------------------------------------------------------
+      - uid: loki-down-alert
+        title: Loki Down
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 60
+              to: 0
+            datasourceUid: loki
+            model:
+              expr: up{job="loki"} == 0
+              intervalMs: 1000
+              maxDataPoints: 43200
+          - refId: C
+            relativeTimeRange:
+              from: 60
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: math
+              expression: A == 0
+        noDataState: Alerting
+        execErrState: Alerting
+        for: 1m
+        annotations:
+          summary: "Loki is down"
+          description: "Loki instance {{ $labels.instance }} is not responding. Log ingestion and querying will fail."
+          runbook_url: "https://github.com/alekparkhomenko/investor/blob/main/docs/loki-operations.md#loki-down"
+        labels:
+          severity: critical
+          component: loki
+
+      # -------------------------------------------------------------------------
+      # Promtail Not Sending Logs (Warning)
+      # Triggered when Promtail stops sending logs for 5 minutes
+      # -------------------------------------------------------------------------
+      - uid: promtail-not-sending-alert
+        title: Promtail Not Sending Logs
+        condition: B
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: loki
+            model:
+              expr: count_over_time({job="promtail"}[5m])
+              intervalMs: 1000
+              maxDataPoints: 43200
+          - refId: B
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: A
+              reducer: last
+              settings:
+                type: below
+                threshold: 1
+        noDataState: Alerting
+        execErrState: Alerting
+        for: 5m
+        annotations:
+          summary: "Promtail is not sending logs"
+          description: "Promtail has not sent any logs in the last 5 minutes. Check Promtail service and connectivity to Loki."
+          runbook_url: "https://github.com/alekparkhomenko/investor/blob/main/docs/loki-operations.md#promtail-disconnected"
+        labels:
+          severity: warning
+          component: promtail
+
+      # -------------------------------------------------------------------------
+      # Log Ingestion Stopped (Critical)
+      # Triggered when no logs from investor application for 10 minutes
+      # -------------------------------------------------------------------------
+      - uid: log-ingestion-stopped-alert
+        title: Log Ingestion Stopped
+        condition: B
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: loki
+            model:
+              expr: count_over_time({app="investor"}[10m])
+              intervalMs: 1000
+              maxDataPoints: 43200
+          - refId: B
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: A
+              reducer: last
+              settings:
+                type: below
+                threshold: 1
+        noDataState: Alerting
+        execErrState: Alerting
+        for: 10m
+        annotations:
+          summary: "Log ingestion stopped for investor application"
+          description: "No logs received from investor application in the last 10 minutes. Application may be down or logging is broken."
+          runbook_url: "https://github.com/alekparkhomenko/investor/blob/main/docs/loki-operations.md#log-ingestion-stopped"
+        labels:
+          severity: critical
+          component: investor-app
+
+      # -------------------------------------------------------------------------
+      # High Memory Usage (Warning)
+      # Triggered when Loki memory usage exceeds 80% of limit
+      # -------------------------------------------------------------------------
+      - uid: loki-high-memory-alert
+        title: High Memory Usage
+        condition: B
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              expr: container_memory_usage_bytes{container="loki"} / (container_spec_memory_limit_bytes{container="loki"} > 0)
+              intervalMs: 1000
+              maxDataPoints: 43200
+          - refId: B
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: A
+              reducer: avg
+              settings:
+                type: above
+                threshold: 0.8
+        noDataState: NoData
+        execErrState: Alerting
+        for: 5m
+        annotations:
+          summary: "Loki high memory usage"
+          description: "Loki is using {{ $value | humanizePercentage }} of its memory limit. Consider increasing memory allocation or investigating memory leaks."
+          runbook_url: "https://github.com/alekparkhomenko/investor/blob/main/docs/loki-operations.md#high-memory-usage"
+        labels:
+          severity: warning
+          component: loki
+
+  # =============================================================================
+  # APPLICATION LOG ALERTS
+  # =============================================================================
+  - name: application-logs
+    folder: Loki
+    interval: 30s
+    rules:
+      # -------------------------------------------------------------------------
+      # High Error Rate (Warning)
+      # Triggered when error log rate exceeds 5% of total logs
+      # -------------------------------------------------------------------------
+      - uid: high-error-rate-alert
+        title: High Error Rate
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: loki
+            model:
+              expr: sum(rate({app="investor", level="error"}[5m]))
+              intervalMs: 1000
+              maxDataPoints: 43200
+          - refId: B
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: loki
+            model:
+              expr: sum(rate({app="investor"}[5m]))
+              intervalMs: 1000
+              maxDataPoints: 43200
+          - refId: C
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: math
+              expression: A / B > 0.05
+        noDataState: NoData
+        execErrState: Alerting
+        for: 5m
+        annotations:
+          summary: "High error rate in investor application"
+          description: "Error rate is {{ $value | humanizePercentage }} in the last 5 minutes. Investigate error logs immediately."
+          runbook_url: "https://github.com/alekparkhomenko/investor/blob/main/docs/loki-operations.md#high-error-rate"
+        labels:
+          severity: warning
+          component: investor-app

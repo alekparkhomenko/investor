@@ -1,0 +1,92 @@
+apiVersion: 1
+
+# Contact points for alert notifications
+# Documentation: https://grafana.com/docs/grafana/latest/alerting/set-up/provision-alerting-resources/#provision-contact-points
+contactPoints:
+  - orgId: 1
+    name: default-receiver
+    receivers:
+      # Email notification channel
+      - uid: email-receiver
+        type: email
+        settings:
+          addresses: admin@example.com
+          singleEmail: false
+          message: |
+            {{ range .Alerts }}
+            Alert: {{ .Annotations.summary }}
+            Severity: {{ .Labels.severity }}
+            Description: {{ .Annotations.description }}
+            Runbook: {{ .Annotations.runbook_url }}
+            {{ end }}
+
+      # Telegram notification channel (requires Telegram bot setup)
+      # To enable: create a bot via @BotFather, get token, add to group/channel
+      - uid: telegram-receiver
+        type: telegram
+        settings:
+          bottoken: ${TELEGRAM_BOT_TOKEN}
+          chatid: ${TELEGRAM_CHAT_ID}
+          disable_notifications: false
+          message: |
+            🚨 *Alert: {{ .Annotations.summary }}*
+            
+            *Severity:* {{ .Labels.severity }}
+            *Component:* {{ .Labels.component }}
+            *Description:* {{ .Annotations.description }}
+            
+            [Runbook]({{ .Annotations.runbook_url }})
+
+# Notification policies
+# Documentation: https://grafana.com/docs/grafana/latest/alerting/set-up/provision-alerting-resources/#provision-notification-policies
+policies:
+  - orgId: 1
+    receiver: default-receiver
+    group_by: ['alertname', 'severity', 'component']
+    group_wait: 30s
+    group_interval: 5m
+    repeat_interval: 4h
+    routes:
+      # Critical alerts - immediate notification
+      - receiver: default-receiver
+        group_by: ['alertname']
+        matchers:
+          - severity = critical
+        group_wait: 10s
+        repeat_interval: 1h
+      
+      # Warning alerts - batched notifications
+      - receiver: default-receiver
+        group_by: ['alertname', 'component']
+        matchers:
+          - severity = warning
+        group_wait: 1m
+        repeat_interval: 4h
+
+# Mute timings (optional - for maintenance windows)
+muteTimings:
+  - name: maintenance-window
+    orgId: 1
+    time_intervals:
+      - weekdays: ['sunday']
+        times:
+          - start_time: '02:00'
+            end_time: '06:00'
+
+# Notification templates (custom templates for messages)
+templates:
+  - orgId: 1
+    name: default-template
+    template: |
+      {{ define "slack.default.title" }}
+        [{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }}
+      {{ end }}
+      
+      {{ define "slack.default.text" }}
+        {{ range .Alerts }}
+          *Alert:* {{ .Annotations.summary }}
+          *Severity:* {{ .Labels.severity }}
+          *Description:* {{ .Annotations.description }}
+          *Runbook:* {{ .Annotations.runbook_url }}
+        {{ end }}
+      {{ end }}
