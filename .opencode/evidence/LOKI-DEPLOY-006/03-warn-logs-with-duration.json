@@ -1,0 +1,15 @@
+{
+  "component": "moex-ingestor",
+  "message": "slow MOEX response",
+  "duration_ms": 4556
+}
+{
+  "component": "moex-ingestor",
+  "message": "slow MOEX response",
+  "duration_ms": 2596
+}
+{
+  "component": "moex-ingestor",
+  "message": "slow MOEX response",
+  "duration_ms": 3966
+}
