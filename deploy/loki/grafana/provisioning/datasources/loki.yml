@@ -9,7 +9,7 @@ datasources:
     editable: false
     jsonData:
       derivedFields:
-        - datasourceUid: prometheus
-          matcherRegex: "duration_ms=(\\d+)"
+        - matcherRegex: "duration_ms=(\\d+)"
           name: Duration
           url: "$${__value.raw}"
+          datasourceUid: ""
