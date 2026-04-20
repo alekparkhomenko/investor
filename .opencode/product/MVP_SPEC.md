@@ -3,13 +3,14 @@
 ## Scope Definition
 
 ### In Scope (MVP)
-1. Product Definition System (4 artifacts)
-2. Planning System with approval gate
-3. State Management (STATE.json)
-4. Architecture Design
-5. Backend Implementation
-6. Quality Review System
-7. Skills Management
+1. **Project Organization** - Centralized YAML configs + Taskfile commands
+2. Product Definition System (4 artifacts)
+3. Planning System with approval gate
+4. State Management (STATE.json)
+5. Architecture Design
+6. Backend Implementation
+7. Quality Review System
+8. Skills Management
 
 ### Out of Scope (Post-MVP)
 - Multi-project support
@@ -23,6 +24,20 @@
 ---
 
 ## User Stories
+
+### Story 0: Project Organization
+**As a** developer  
+**I want** all YAML configuration files in one place  
+**So that** I can easily find, deploy, and maintain them
+
+**Acceptance Criteria:**
+- [ ] All YAML configs in single directory
+- [ ] Taskfile.yaml has deployment commands
+- [ ] Setup documentation exists
+- [ ] Easy to discover for new team members
+
+**Priority:** P0  
+**SP:** 2
 
 ### Story 1: Product Definition
 **As a** team lead  
@@ -103,6 +118,11 @@
 - Input validation
 - Audit trail
 
+### Developer Experience
+- Configuration files easy to discover (<30s to find)
+- Deployment commands self-documenting
+- Clear separation of concerns (configs vs code)
+
 ---
 
-**Version:** 1.0 | **Date:** 2026-01-15
+**Version:** 1.1 | **Date:** 2026-04-20

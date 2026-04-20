@@ -35,3 +35,10 @@ go.work.sum
 
 # Tool binaries
 bin/
+
+# Loki stack data
+grafana-data/
+promtail/positions.yaml
+
+# Allow deploy/loki/ but ignore root-level legacy directories
+!deploy/loki/

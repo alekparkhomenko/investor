@@ -24,8 +24,11 @@ package logger
 
 import (
 	"context"
+	"fmt"
 	"log"
+	"strings"
 	"sync"
+	"time"
 
 	lokilogger "github.com/edaniel30/loki-logger-go"
 )
@@ -33,8 +36,9 @@ import (
 // Fields represents structured log fields for contextual logging.
 type Fields map[string]interface{}
 
-// Logger provides a unified logging interface with Loki backend support.
-// When Loki is disabled, it acts as a no-op logger.
+// Logger provides a unified logging interface with Loki and console output.
+// Always logs to console (stdout/stderr), optionally also to Loki if enabled.
+// When Loki is disabled, the logger still works and outputs to console only.
 type Logger struct {
 	loki   *lokilogger.Logger
 	mu     sync.Mutex
@@ -51,18 +55,22 @@ type Config struct {
 }
 
 // New creates a new logger instance based on the provided configuration.
-// Returns a no-op logger if Loki is not enabled.
+// Always logs to console, optionally also to Loki if enabled.
 func New(cfg *Config) (*Logger, error) {
+	logger := &Logger{}
+
+	// Optionally create Loki logger
 	if cfg.LokiEnabled {
 		l, err := createLokiLogger(cfg)
 		if err != nil {
-			return nil, err
+			// Log error to console but continue with console-only logger
+			consoleLog("ERROR", "failed to initialize Loki logger, using console-only", err)
+			return logger, nil
 		}
-		return &Logger{loki: l}, nil
+		logger.loki = l
 	}
 
-	// Return no-op logger if Loki is not enabled
-	return &Logger{}, nil
+	return logger, nil
 }
 
 func createLokiLogger(cfg *Config) (*lokilogger.Logger, error) {
@@ -81,39 +89,106 @@ func createLokiLogger(cfg *Config) (*lokilogger.Logger, error) {
 	return client, nil
 }
 
-// Info logs an info message.
+// consoleLog writes a log message to stdout/stderr with timestamp and level.
+func consoleLog(level, msg string, err error) {
+	timestamp := time.Now().Format(time.RFC3339)
+	var sb strings.Builder
+
+	sb.WriteString(timestamp)
+	sb.WriteString(" ")
+	sb.WriteString(level)
+	sb.WriteString(" ")
+	sb.WriteString(msg)
+
+	if err != nil {
+		sb.WriteString(" error=")
+		sb.WriteString(err.Error())
+	}
+
+	sb.WriteString("\n")
+
+	if level == "ERROR" || level == "FATAL" {
+		fmt.Fprint(log.Writer(), sb.String())
+	} else {
+		fmt.Print(sb.String())
+	}
+}
+
+// formatFields converts Fields to a readable string for console output.
+func formatFields(fields Fields) string {
+	if len(fields) == 0 {
+		return ""
+	}
+
+	var sb strings.Builder
+	sb.WriteString(" ")
+
+	first := true
+	for k, v := range fields {
+		if !first {
+			sb.WriteString(" ")
+		}
+		fmt.Fprintf(&sb, "%s=%v", k, v)
+		first = false
+	}
+
+	return sb.String()
+}
+
+// Info logs an info message to console and Loki (if enabled).
 func (l *Logger) Info(ctx context.Context, msg string, fields Fields) {
+	// Always log to console
+	consoleLog("INFO", msg+formatFields(fields), nil)
+
+	// Also log to Loki if enabled
 	if l.loki != nil {
 		l.loki.Info(ctx, msg, fields)
 	}
 }
 
-// Error logs an error message.
+// Error logs an error message to console and Loki (if enabled).
 func (l *Logger) Error(ctx context.Context, msg string, fields Fields) {
+	// Always log to console
+	consoleLog("ERROR", msg+formatFields(fields), nil)
+
+	// Also log to Loki if enabled
 	if l.loki != nil {
 		l.loki.Error(ctx, msg, fields)
 	}
 }
 
-// Warn logs a warning message.
+// Warn logs a warning message to console and Loki (if enabled).
 func (l *Logger) Warn(ctx context.Context, msg string, fields Fields) {
+	// Always log to console
+	consoleLog("WARN", msg+formatFields(fields), nil)
+
+	// Also log to Loki if enabled
 	if l.loki != nil {
 		l.loki.Warn(ctx, msg, fields)
 	}
 }
 
-// Debug logs a debug message.
+// Debug logs a debug message to console and Loki (if enabled).
 func (l *Logger) Debug(ctx context.Context, msg string, fields Fields) {
+	// Always log to console
+	consoleLog("DEBUG", msg+formatFields(fields), nil)
+
+	// Also log to Loki if enabled
 	if l.loki != nil {
 		l.loki.Debug(ctx, msg, fields)
 	}
 }
 
-// Fatal logs a fatal message and exits.
+// Fatal logs a fatal message to console and Loki (if enabled), then exits.
 func (l *Logger) Fatal(ctx context.Context, msg string, fields Fields) {
+	// Always log to console
+	consoleLog("FATAL", msg+formatFields(fields), nil)
+
+	// Also log to Loki if enabled
 	if l.loki != nil {
 		l.loki.Fatal(ctx, msg, fields)
 	}
+
 	log.Fatal(msg)
 }
 

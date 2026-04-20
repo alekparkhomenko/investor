@@ -1,8 +1,9 @@
 # Loki Log Migration — System Architecture
 
-**Version:** 1.0.0  
+**Version:** 1.1.0  
 **Status:** ✅ APPROVED  
 **Created:** 2026-04-19  
+**Updated:** 2026-04-20  
 **Immutable:** true (changes require human approval)
 
 ---
@@ -507,6 +508,81 @@ kill $APP_PID
 
 ---
 
-**Document Version:** 1.0.0  
-**Last Updated:** 2026-04-19  
+## Loki Stack Organization
+
+### Directory Structure
+
+All Loki Stack YAML configuration files are consolidated in a single directory for improved discoverability and maintainability.
+
+```
+deploy/
+  loki/
+    docker-compose.yml          # Main Docker Compose file
+    loki-config.yml             # Loki server configuration
+    promtail-config.yml         # Promtail log collector configuration
+    grafana/
+      provisioning/
+        datasources/
+          loki.yml              # Grafana Loki datasource
+        dashboards/
+          investor-logs.json    # Pre-configured dashboard
+          dashboard.yml         # Dashboard provisioning config
+```
+
+### File Migration Plan
+
+| Current Path | New Path | Action |
+|--------------|----------|--------|
+| `docker-compose.loki.yml` (root) | `deploy/loki/docker-compose.yml` | Move + rename |
+| `loki/loki-config.yml` | `deploy/loki/loki-config.yml` | Move |
+| `promtail/promtail-config.yml` | `deploy/loki/promtail-config.yml` | Move |
+| `grafana/provisioning/datasources/loki.yml` | `deploy/loki/grafana/provisioning/datasources/loki.yml` | Move |
+
+### Volume Path Updates
+
+After migration, `docker-compose.yml` volume paths must be updated:
+
+**Before:**
+```yaml
+volumes:
+  - ./loki:/etc/loki
+  - ./promtail:/etc/promtail
+  - ./grafana/provisioning:/etc/grafana/provisioning
+```
+
+**After:**
+```yaml
+volumes:
+  - ./loki-config.yml:/etc/loki/loki-config.yml:ro
+  - ./promtail-config.yml:/etc/promtail/promtail-config.yml:ro
+  - ./grafana/provisioning:/etc/grafana/provisioning:ro
+```
+
+### Deployment Commands
+
+```bash
+# From project root
+docker-compose -f deploy/loki/docker-compose.yml up -d
+
+# Or from deploy/loki directory
+cd deploy/loki
+docker-compose up -d
+```
+
+### Design Principles
+
+1. **Single Location** — All Loki Stack configs in one place
+2. **Self-Contained** — Can be deployed independently from application
+3. **Clear Structure** — Config files at root, Grafana provisioning in subdirectory
+4. **Read-Only Mounts** — Config files mounted as `:ro` for security
+5. **Scalable** — `deploy/` can host other deployment configurations (k8s, local, etc.)
+
+### Architecture Decision Record
+
+This organization follows **ADR-005: Loki Stack Organization** (see DECISIONS.md).
+
+---
+
+**Document Version:** 1.1.0  
+**Last Updated:** 2026-04-20  
 **Status:** ✅ APPROVED (Ready for Implementation)
