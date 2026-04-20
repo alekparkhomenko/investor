@@ -152,3 +152,61 @@ tasks:
     desc: "Показывает логи docker-compose"
     cmds:
       - docker-compose logs -f
+
+  # =============================================================================
+  # Loki Stack Management
+  # =============================================================================
+
+  loki:up:
+    desc: "Запуск Loki stack (loki, promtail, grafana)"
+    aliases: [ loki:start ]
+    cmds:
+      - |
+        echo "🚀 Запуск Loki stack..."
+        docker-compose -f deploy/loki/docker-compose.yml up -d
+        echo "✅ Loki stack запущен"
+        echo "📊 Grafana: http://localhost:3000 (admin/admin)"
+        echo "📝 Loki: http://localhost:3100"
+
+  loki:down:
+    desc: "Остановка Loki stack"
+    aliases: [ loki:stop ]
+    cmds:
+      - |
+        echo "🛑 Остановка Loki stack..."
+        docker-compose -f deploy/loki/docker-compose.yml down
+        echo "✅ Loki stack остановлен"
+
+  loki:logs:
+    desc: "Просмотр логов всех сервисов Loki stack"
+    aliases: [ loki:log ]
+    deps: [ loki:up ]
+    cmds:
+      - |
+        echo "📋 Логи Loki stack..."
+        docker-compose -f deploy/loki/docker-compose.yml logs -f
+
+  loki:status:
+    desc: "Статус сервисов Loki stack"
+    aliases: [ loki:ps ]
+    cmds:
+      - |
+        echo "📊 Статус сервисов Loki stack..."
+        docker-compose -f deploy/loki/docker-compose.yml ps
+
+  loki:validate:
+    desc: "Валидация конфигурации Loki stack"
+    aliases: [ loki:config, loki:check ]
+    cmds:
+      - |
+        echo "🔍 Валидация конфигурации Loki stack..."
+        docker-compose -f deploy/loki/docker-compose.yml config
+
+  loki:prune:
+    desc: "Очистка Loki stack (удаление volumes)"
+    aliases: [ loki:clean ]
+    cmds:
+      - |
+        echo "🧹 Очистка Loki stack (удаление volumes)..."
+        docker-compose -f deploy/loki/docker-compose.yml down -v
+        echo "✅ Loki stack очищен"
