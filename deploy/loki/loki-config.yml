@@ -5,12 +5,13 @@ server:
   grpc_listen_port: 9096
 
 common:
-  instance_addr: 127.0.0.1
+  instance_addr: 0.0.0.0
   path_prefix: /loki
   storage:
     filesystem:
       chunks_directory: /loki/chunks
       rules_directory: /loki/rules
+      wal_directory: /loki/wal
   replication_factor: 1
   ring:
     kvstore:
@@ -35,6 +36,11 @@ schema_config:
 
 ruler:
   alertmanager_url: http://localhost:9093
+  rule_path: /loki/rules
+  storage:
+    type: local
+    local:
+      directory: /loki/rules
 
 limits_config:
   retention_period: 168h  # 7 days
@@ -44,6 +50,10 @@ limits_config:
   max_cache_freshness_per_query: 10m
   split_queries_by_interval: 15m
   max_entries_limit_per_query: 5000
+  ingestion_rate_mb: 16
+  ingestion_burst_size_mb: 24
+  max_query_parallelism: 32
+  max_query_series: 500
 
 chunk_store_config:
   max_look_back_period: 0s
@@ -51,3 +61,11 @@ chunk_store_config:
 table_manager:
   retention_deletes_enabled: true
   retention_period: 168h
+
+compactor:
+  working_directory: /loki/compactor
+  shared_store: filesystem
+  compaction_interval: 10m
+  retention_enabled: true
+  retention_delete_delay: 2h
+  retention_delete_worker_count: 150
