@@ -9,6 +9,8 @@ import (
 type AppSettings interface {
 	Symbols() string
 	PollInterval() time.Duration
+	DatabaseURL() string
+	HTTPAddress() string
 }
 
 type LoggerSettings interface {

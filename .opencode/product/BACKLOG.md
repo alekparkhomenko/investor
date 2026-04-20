@@ -153,16 +153,51 @@ Integrate Grafana alerting with Telegram bot for real-time notifications.
 
 ---
 
+### 10. Custom User Alerts
+**SP:** 8 | **Deps:** None
+
+**Description:**
+User-defined alert rules with flexible notification channels. Users can create personal alert conditions (price thresholds, percent changes) and receive notifications via Telegram, Email, or Webhook.
+
+**Acceptance:**
+- API for CRUD alert rules
+- Rule conditions: price above/below, percent change, volume spike
+- Notification channels: Telegram, Email, Webhook
+- Alert history logging
+- Per-user rule management
+
+**Skills:** golang-api-design, database-design, notification-systems
+
+---
+
+### 11. User Portfolio Selection
+**SP:** 8 | **Deps:** None
+
+**Description:**
+CLI interface for selecting and managing personal ticker portfolio. Users can browse available MOEX tickers, add/remove them to their portfolio, and receive price updates for selected stocks.
+
+**Acceptance:**
+- Command: `investor ticker list` - show available MOEX tickers
+- Command: `investor portfolio` - show user's portfolio
+- Command: `investor portfolio add SBER GAZP` - add tickers
+- Command: `investor portfolio remove TATN` - remove tickers
+- PostgreSQL storage for portfolios
+- Integration with MOEX ingestor
+
+**Skills:** golang-cli, database-design, golang-db-patterns
+
+---
+
 ## Summary
 
 | Priority | Count | Story Points |
 |----------|-------|--------------|
 | P0 | 8 | 36 |
-| P2 | 1 | 5 |
-| **Total** | **9** | **41** |
+| P2 | 3 | 21 |
+| **Total** | **11** | **57** |
 
 **Estimated Duration:** 4-6 weeks (P0)
 
 ---
 
-**Version:** 1.2 | **Last Updated:** 2026-04-20
+**Version:** 1.4 | **Last Updated:** 2026-04-20
