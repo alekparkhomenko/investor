@@ -11,11 +11,15 @@ common:
     filesystem:
       chunks_directory: /loki/chunks
       rules_directory: /loki/rules
-      wal_directory: /loki/wal
   replication_factor: 1
   ring:
     kvstore:
       store: inmemory
+
+ingester:
+  wal:
+    enabled: true
+    dir: /loki/wal
 
 query_range:
   results_cache:

@@ -123,10 +123,10 @@
       "comments": null,
       "gate_message": "Plan v1.1 approved with Phase 0: Project Organization. Ready for implementation."
     },
-    "metadata": {
+"metadata": {
       "total_tasks": 12,
-      "completed_tasks": 4,
-      "pending_tasks": 8,
+      "completed_tasks": 7,
+      "pending_tasks": 5,
       "blocked_tasks": 0
     },
     "tasks": [

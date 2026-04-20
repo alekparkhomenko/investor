@@ -8,7 +8,7 @@ services:
     volumes:
       - ./loki-config.yml:/etc/loki/loki-config.yml:ro
       - loki-data:/loki
-    command: -config.file=/etc/loki/loki-config.yml
+    command: -config.file=/etc/loki/loki-config.yml -config.expand-env=true
     restart: unless-stopped
     networks:
       - monitoring

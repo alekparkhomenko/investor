@@ -29,10 +29,12 @@ scrape_configs:
             tag:
           source: attrs
       - regex:
-          expression: (?P<container_name>(?:|(?:[a-zA-Z0-9][a-zA-Z0-9_.-]+)))
+          expression: (?P<container_name>(?:[a-zA-Z0-9][a-zA-Z0-9_.-]+)?)
           source: tag
+      - labeldrop:
+          - filename
       - labels:
-          - container_name
+          container_name:
       - output:
           source: output
 
