@@ -8,22 +8,67 @@
 
 ---
 
-## 🚀 Запуск
+## 🎯 Taskfile Commands
+
+Проект использует Taskfile для управления Loki stack. Все команды доступны через `task`.
+
+### Основные команды
+
+| Команда | Aliases | Описание |
+|---------|---------|----------|
+| `task loki:up` | `loki:start` | Запуск Loki stack |
+| `task loki:down` | `loki:stop` | Остановка Loki stack |
+| `task loki:logs` | `loki:log` | Просмотр логов всех сервисов |
+| `task loki:status` | `loki:ps` | Статус сервисов |
+| `task loki:validate` | `loki:config`, `loki:check` | Валидация конфигурации |
+| `task loki:prune` | `loki:clean` | Очистка (удаление volumes) |
+
+### Примеры использования
+
+**Запуск Loki stack:**
+```bash
+task loki:up
+```
+
+**Просмотр логов в реальном времени:**
+```bash
+task loki:logs
+```
+
+**Проверка статуса сервисов:**
+```bash
+task loki:status
+```
+
+**Валидация конфигурации:**
+```bash
+task loki:validate
+```
+
+**Остановка с очисткой данных:**
+```bash
+task loki:prune
+```
+
+---
+
+## 🚀 Быстрый старт
 
 ### Шаг 1: Запустите Loki stack
 
 ```bash
 cd /Users/alekparkhomenko/Projects/investor
 
-# Запуск всех сервисов
-docker-compose -f docker-compose.loki.yml up -d
+# Запуск всех сервисов через Taskfile
+task loki:up
 
 # Проверка статуса
-docker-compose -f docker-compose.loki.yml ps
+task loki:status
 ```
 
 Ожидаемый вывод:
 ```
+📊 Статус сервисов Loki stack...
 NAME       IMAGE                        STATUS
 loki       grafana/loki:2.9.0           Up
 promtail   grafana/promtail:2.9.0       Up
@@ -38,6 +83,8 @@ grafana    grafana/grafana:10.2.0       Up
 - **Пароль:** `admin`
 
 Grafana уже настроена с datasource Loki!
+
+> 💡 **Совет:** Используйте `task loki:status` для проверки статуса сервисов и `task loki:logs` для просмотра логов в реальном времени.
 
 ---
 
@@ -68,7 +115,7 @@ go run cmd/main.go
 
 ```bash
 # Запуск investor вместе с Loki stack
-docker-compose -f docker-compose.yml -f docker-compose.loki.yml up -d
+docker-compose -f docker-compose.yml -f deploy/loki/docker-compose.yml up -d
 
 # Просмотр логов
 docker-compose logs -f investor
@@ -162,20 +209,32 @@ topk(5, {app="investor"} | json | duration_ms > 500)
 
 ## ⚙️ Конфигурация
 
-### Loki (loki/loki-config.yml)
+Структура файлов:
+```
+deploy/loki/
+├── docker-compose.yml        # Docker Compose конфигурация
+├── loki-config.yml           # Конфигурация Loki
+├── promtail-config.yml       # Конфигурация Promtail
+└── grafana/
+    └── provisioning/
+        ├── datasources/      # Datasources (Loki)
+        └── dashboards/       # Дашборды
+```
+
+### Loki (deploy/loki/loki-config.yml)
 
 Основные настройки:
 - `retention_period: 168h` - хранение 7 дней
 - `http_listen_port: 3100` - порт API
 
-### Promtail (promtail/promtail-config.yml)
+### Promtail (deploy/loki/promtail-config.yml)
 
 Собирает логи:
 - Docker контейнеры
 - Файлы `/var/log/investor/*.log`
 - Системные логи
 
-### Grafana (grafana/provisioning/)
+### Grafana (deploy/loki/grafana/provisioning/)
 
 Автоматическая настройка:
 - Loki datasource
@@ -186,11 +245,21 @@ topk(5, {app="investor"} | json | duration_ms > 500)
 ## 🛑 Остановка
 
 ```bash
-# Остановить все сервисы
-docker-compose -f docker-compose.loki.yml down
+# Остановить все сервисы через Taskfile
+task loki:down
 
 # Остановить с удалением данных (осторожно!)
-docker-compose -f docker-compose.loki.yml down -v
+task loki:prune
+```
+
+Или используя docker-compose напрямую:
+
+```bash
+# Остановить все сервисы
+docker-compose -f deploy/loki/docker-compose.yml down
+
+# Остановить с удалением данных (осторожно!)
+docker-compose -f deploy/loki/docker-compose.yml down -v
 ```
 
 ---
@@ -200,38 +269,87 @@ docker-compose -f docker-compose.loki.yml down -v
 ### Loki не запускается
 
 ```bash
-# Проверить логи
-docker-compose -f docker-compose.loki.yml logs loki
+# Проверить логи через Taskfile
+task loki:logs
+
+# Или напрямую
+docker-compose -f deploy/loki/docker-compose.yml logs loki
 
 # Пересоздать контейнер
-docker-compose -f docker-compose.loki.yml up -d --force-recreate loki
+docker-compose -f deploy/loki/docker-compose.yml up -d --force-recreate loki
 ```
 
 ### Логи не попадают в Loki
 
 1. Проверьте, что приложение запущено с `LOKI_ENABLED=true`
+
 2. Проверьте connectivity:
-   ```bash
-   curl http://localhost:3100/ready
-   ```
-   Должно вернуть: `ready`
+    ```bash
+    curl http://localhost:3100/ready
+    ```
+    Должно вернуть: `ready`
 
 3. Проверьте логи Promtail:
-   ```bash
-   docker-compose -f docker-compose.loki.yml logs promtail
-   ```
+    ```bash
+    # Через Taskfile
+    task loki:logs
+    
+    # Или напрямую
+    docker-compose -f deploy/loki/docker-compose.yml logs promtail
+    ```
+
+4. Проверьте конфигурацию Promtail:
+    ```bash
+    task loki:validate
+    ```
 
 ### Grafana не видит Loki
 
 1. Проверьте, что Loki запущен:
-   ```bash
-   docker-compose -f docker-compose.loki.yml ps loki
-   ```
+    ```bash
+    # Через Taskfile
+    task loki:status
+    
+    # Или напрямую
+    docker-compose -f deploy/loki/docker-compose.yml ps loki
+    ```
 
 2. Проверьте datasource в Grafana:
-   - **Configuration** → **Data sources** → **Loki**
-   - Нажмите **Save & test**
-   - Должно быть: `Data source is working`
+    - **Configuration** → **Data sources** → **Loki**
+    - Нажмите **Save & test**
+    - Должно быть: `Data source is working`
+
+### Распространённые проблемы
+
+| Проблема | Решение |
+|----------|---------|
+| Порт 3100 занят | Проверьте: `lsof -i :3100`, остановите конфликтующий сервис |
+| Порт 3000 занят | Проверьте: `lsof -i :3000`, измените порт в docker-compose.yml |
+| Loki не принимает логи | Проверьте `LOKI_HOST` в .env, должен быть `http://localhost:3100` |
+| Promtail не отправляет логи | Проверьте логи: `task loki:logs`, убедитесь что Loki доступен |
+| Grafana не показывает логи | Проверьте datasource, выберите правильный time range в Explore |
+
+### Команды для диагностики
+
+```bash
+# Проверка статуса всех сервисов
+task loki:status
+
+# Проверка доступности Loki API
+curl http://localhost:3100/ready
+curl http://localhost:3100/loki/api/v1/status
+
+# Просмотр логов конкретного сервиса
+docker-compose -f deploy/loki/docker-compose.yml logs loki
+docker-compose -f deploy/loki/docker-compose.yml logs promtail
+docker-compose -f deploy/loki/docker-compose.yml logs grafana
+
+# Валидация конфигурации
+task loki:validate
+
+# Перезапуск конкретного сервиса
+docker-compose -f deploy/loki/docker-compose.yml restart loki
+```
 
 ---
 
@@ -240,12 +358,13 @@ docker-compose -f docker-compose.loki.yml up -d --force-recreate loki
 - [Loki Documentation](https://grafana.com/docs/loki/)
 - [LogQL Guide](https://grafana.com/docs/loki/latest/logql/)
 - [Grafana Dashboards](https://grafana.com/grafana/dashboards/?dataSource=loki)
+- [Taskfile Documentation](https://taskfile.dev/)
 
 ---
 
 ## 🎯 Next Steps
 
-1. ✅ Запустить Loki stack
+1. ✅ Запустить Loki stack: `task loki:up`
 2. ✅ Запустить приложение с `LOKI_ENABLED=true`
 3. ✅ Открыть Grafana (http://localhost:3000)
 4. ✅ Найти логи в Explore
