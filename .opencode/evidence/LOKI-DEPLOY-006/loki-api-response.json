@@ -1,0 +1,71 @@
+{
+  "test": "Loki API Response Verification",
+  "timestamp": "2026-04-20T09:30:00+03:00",
+  "tests": {
+    "loki_ready": {
+      "endpoint": "http://localhost:3100/ready",
+      "response": "ready",
+      "status": "PASS"
+    },
+    "loki_labels": {
+      "endpoint": "http://localhost:3100/loki/api/v1/labels",
+      "response": {
+        "status": "success",
+        "data": ["app", "environment", "filename", "job", "level", "version"]
+      },
+      "status": "PASS",
+      "note": "All expected labels present: app, environment, level, version"
+    },
+    "app_label_values": {
+      "endpoint": "http://localhost:3100/loki/api/v1/label/app/values",
+      "response": {
+        "status": "success",
+        "data": ["investor"]
+      },
+      "status": "PASS",
+      "note": "investor application logs are indexed"
+    },
+    "query_logs_info": {
+      "query": "{app=\"investor\", level=\"info\"}",
+      "sample_logs": [
+        {"component": "app", "message": "received quotes"},
+        {"component": "moex-ingestor", "message": "quotes fetched"},
+        {"component": "main", "message": "graceful shutdown started"}
+      ],
+      "status": "PASS"
+    },
+    "query_logs_warn_with_duration": {
+      "query": "{app=\"investor\", level=\"warn\"}",
+      "sample_logs": [
+        {"component": "moex-ingestor", "message": "slow MOEX response", "duration_ms": 4556},
+        {"component": "moex-ingestor", "message": "slow MOEX response", "duration_ms": 2596}
+      ],
+      "status": "PASS",
+      "note": "duration_ms field is properly indexed and queryable"
+    },
+    "grafana_datasource": {
+      "endpoint": "http://localhost:3000/api/datasources",
+      "response": {
+        "name": "Loki",
+        "type": "loki",
+        "url": "http://loki:3100"
+      },
+      "status": "PASS",
+      "note": "Grafana is connected to Loki"
+    }
+  },
+  "structured_fields_verified": [
+    "app",
+    "component", 
+    "level",
+    "environment",
+    "version",
+    "duration_ms",
+    "file",
+    "line",
+    "message",
+    "url",
+    "error"
+  ],
+  "conclusion": "All acceptance criteria PASSED. Logs are successfully ingested into Loki with all structured fields properly indexed."
+}

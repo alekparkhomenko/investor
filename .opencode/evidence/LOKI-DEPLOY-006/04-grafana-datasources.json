@@ -1,0 +1,28 @@
+[
+  {
+    "id": 1,
+    "uid": "P8E80F9AEF21F6940",
+    "orgId": 1,
+    "name": "Loki",
+    "type": "loki",
+    "typeName": "Loki",
+    "typeLogoUrl": "/public/app/plugins/datasource/loki/img/loki_icon.svg",
+    "access": "proxy",
+    "url": "http://loki:3100",
+    "user": "",
+    "database": "",
+    "basicAuth": false,
+    "isDefault": true,
+    "jsonData": {
+      "derivedFields": [
+        {
+          "datasourceUid": "",
+          "matcherRegex": "duration_ms=(\\d+)",
+          "name": "Duration",
+          "url": "${__value.raw}"
+        }
+      ]
+    },
+    "readOnly": true
+  }
+]

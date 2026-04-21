@@ -1,14 +1,39 @@
 package metrics
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"strconv"
 	"time"
+
+	"github.com/alekparkhomenko/investor/platform/pkg/logger"
 )
 
-func WritePID(path string) error {
-	return os.WriteFile(path, []byte(fmt.Sprintf("%d", os.Getpid())), 0644)
+// WritePID writes the current process PID to a file.
+// If logger is provided, logs the operation result.
+func WritePID(path string, log *logger.Logger) error {
+	pid := os.Getpid()
+	err := os.WriteFile(path, []byte(fmt.Sprintf("%d", pid)), 0644)
+	
+	if log != nil {
+		ctx := context.Background()
+		if err != nil {
+			log.Warn(ctx, "failed to write PID file", logger.Fields{
+				"component": "metrics",
+				"error":     err.Error(),
+				"pid_file":  path,
+			})
+		} else {
+			log.Info(ctx, "PID file written", logger.Fields{
+				"component": "metrics",
+				"pid":       pid,
+				"pid_file":  path,
+			})
+		}
+	}
+	
+	return err
 }
 
 func ReadPID(path string) (int, error) {

@@ -13,6 +13,14 @@ var appConfig *Config
 type Config struct {
 	App    AppSettings
 	Logger LoggerSettings
+	DB     DBSettings
+}
+
+// DBSettings holds database configuration.
+type DBSettings struct {
+	URL         string
+	MaxOpenConns int
+	MaxIdleConns int
 }
 
 func Load() error {
@@ -34,6 +42,11 @@ func Load() error {
 	appConfig = &Config{
 		App:    appCfg,
 		Logger: loggerCfg,
+		DB: DBSettings{
+			URL:         appCfg.DatabaseURL(),
+			MaxOpenConns: 25,
+			MaxIdleConns: 10,
+		},
 	}
 
 	return nil

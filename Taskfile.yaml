@@ -125,30 +125,178 @@ tasks:
     cmds:
       - |
         echo "🐳 Собираем Docker образ..."
-        docker build -t investor:latest -f investor/Dockerfile .
+        docker build -t investor:latest -f investor/Dockerfile ../..
 
   docker:up:
-    desc: "Запускает проект через docker-compose"
-    deps: [ docker:build ]
+    desc: "Запускает проект (app + loki)"
     cmds:
       - |
-        echo "🐳 Запускаем через docker-compose..."
-        docker-compose up -d
+        echo "🐳 Запускаем app + postgres..."
+        docker compose -f deploy/app/docker-compose.yml up -d --build
+        echo "🐳 Запускаем loki stack..."
+        docker compose -f deploy/loki/docker-compose.yml up -d
+        echo "✅ Все сервисы запущены"
+        echo "📊 App: http://localhost:8080"
+        echo "📊 Swagger: http://localhost:8080/swagger"
+        echo "📊 Grafana: http://localhost:3000 (admin/admin)"
 
   docker:down:
-    desc: "Останавливает проект через docker-compose"
+    desc: "Останавливает все сервисы"
     cmds:
       - |
-        echo "🐳 Останавливаем docker-compose..."
-        docker-compose down
+        echo "🐳 Останавливаем app..."
+        docker compose -f deploy/app/docker-compose.yml down
+        echo "🐳 Останавливаем loki stack..."
+        docker compose -f deploy/loki/docker-compose.yml down
+        echo "✅ Все сервисы остановлены"
 
   docker:restart:
-    desc: "Перезапускает проект через docker-compose"
-    deps: [ docker:down, docker:up ]
+    desc: "Перезапускает все сервисы"
     cmds:
-      - echo "🔄 Перезапуск завершён"
+      - |
+        echo "🔄 Перезапускаем..."
+        docker compose -f deploy/app/docker-compose.yml down
+        docker compose -f deploy/loki/docker-compose.yml down
+        docker compose -f deploy/loki/docker-compose.yml up -d
+        docker compose -f deploy/app/docker-compose.yml up -d --build
+        echo "✅ Все сервисы перезапущены"
 
   docker:logs:
     desc: "Показывает логи docker-compose"
     cmds:
-      - docker-compose logs -f
+      - docker compose -f deploy/app/docker-compose.yml logs -f
+
+  # =============================================================================
+  # Loki Stack Management
+  # =============================================================================
+
+  loki:up:
+    desc: "Запуск Loki stack (loki, promtail, grafana)"
+    aliases: [ loki:start ]
+    cmds:
+      - |
+        echo "🚀 Запуск Loki stack..."
+        docker compose -f deploy/loki/docker-compose.yml up -d
+        echo "✅ Loki stack запущен"
+        echo "📊 Grafana: http://localhost:3000 (admin/admin)"
+        echo "📝 Loki: http://localhost:3100"
+
+  loki:down:
+    desc: "Остановка Loki stack"
+    aliases: [ loki:stop ]
+    cmds:
+      - |
+        echo "🛑 Остановка Loki stack..."
+        docker compose -f deploy/loki/docker-compose.yml down
+        echo "✅ Loki stack остановлен"
+
+  loki:logs:
+    desc: "Просмотр логов всех сервисов Loki stack"
+    aliases: [ loki:log ]
+    deps: [ loki:up ]
+    cmds:
+      - |
+        echo "📋 Логи Loki stack..."
+        docker compose -f deploy/loki/docker-compose.yml logs -f
+
+  loki:status:
+    desc: "Статус сервисов Loki stack"
+    aliases: [ loki:ps ]
+    cmds:
+      - |
+        echo "📊 Статус сервисов Loki stack..."
+        docker compose -f deploy/loki/docker-compose.yml ps
+
+  loki:validate:
+    desc: "Валидация конфигурации Loki stack"
+    aliases: [ loki:config, loki:check ]
+    cmds:
+      - |
+        echo "🔍 Валидация конфигурации Loki stack..."
+        docker compose -f deploy/loki/docker-compose.yml config
+
+  loki:prune:
+    desc: "Очистка Loki stack (удаление volumes)"
+    aliases: [ loki:clean ]
+    cmds:
+      - |
+        echo "🧹 Очистка Loki stack (удаление volumes)..."
+        docker compose -f deploy/loki/docker-compose.yml down -v
+        echo "✅ Loki stack очищен"
+
+  # =============================================================================
+  # Database Management
+  # =============================================================================
+
+  db:up:
+    desc: "Запуск PostgreSQL"
+    cmds:
+      - |
+        echo "🚀 Запуск PostgreSQL..."
+        docker compose -f deploy/postgres/docker-compose.yml up -d
+        echo "✅ PostgreSQL запущен"
+
+  db:down:
+    desc: "Остановка PostgreSQL"
+    cmds:
+      - |
+        echo "🛑 Остановка PostgreSQL..."
+        docker compose -f deploy/postgres/docker-compose.yml down
+        echo "✅ PostgreSQL остановлен"
+
+  db:migrate:apply:
+    desc: "Применение миграций базы данных"
+    cmds:
+      - |
+        echo "🗄️ Применяем миграции..."
+        PGPASSWORD=investor psql -h localhost -U investor -d investor -f investor/migrations/001_portfolio.up.sql
+        echo "✅ Миграции применены"
+
+  db:migrate:rollback:
+    desc: "Откат миграций базы данных"
+    cmds:
+      - |
+        echo "↩️ Откатываем миграции..."
+        PGPASSWORD=investor psql -h localhost -U investor -d investor -f investor/migrations/001_portfolio.down.sql
+        echo "✅ Миграции откачены"
+
+  db:seed:
+    desc: "Заполнение базы данных тестовыми данными"
+    deps: [ db:migrate:apply ]
+    cmds:
+      - |
+        echo "🌱 Данные уже в миграции (1_portfolio.up.sql)"
+        echo "✅ Seed data Ready"
+
+  db:psql:
+    desc: "Подключение к PostgreSQL через psql"
+    cmds:
+      - PGPASSWORD=investor psql -h localhost -U investor -d investor
+
+  # =============================================================================
+  # Portfolio API
+  # =============================================================================
+
+  api:up:
+    desc: "Запуск Portfolio API сервера"
+    cmds:
+      - |
+        echo "🚀 Запускаем Portfolio API..."
+        cd investor && go run cmd/main.go
+
+  api:swagger:
+    desc: "Открыть Swagger UI в браузере"
+    cmds:
+      - open http://localhost:8080/swagger/index.html
+
+  api:test:
+    desc: "Тестирование API endpoint'ов"
+    cmds:
+      - |
+        echo "🧪 Тестируем API..."
+        echo "📋 GET /api/v1/tickers"
+        curl -s http://localhost:8080/api/v1/tickers | head -c 500
+        echo ""
+        echo "📋 GET /api/v1/portfolio"
+        curl -s http://localhost:8080/api/v1/portfolio
+        echo ""

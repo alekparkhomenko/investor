@@ -233,15 +233,192 @@ Use STATE.json file as single source of truth, with Orchestrator as sole writer.
 
 ---
 
+### ADR-005: JWT for Authentication
+
+**Status:** ACCEPTED  
+**Date:** 2026-01-15  
+**Deciders:** System Architect
+
+**Context:**
+Select authentication mechanism.
+
+**Decision:**
+Use JWT (JSON Web Tokens) for stateless authentication.
+
+**Consequences:**
+- **Positive:** Stateless, scalable
+- **Positive:** No server-side session storage needed
+- **Positive:** Cross-domain compatible
+- **Negative:** Token size (adds overhead)
+- **Negative:** Cannot revoke immediately (need short expiry)
+
+**Alternatives Considered:**
+1. **Session Cookies** - Server-side state, harder to scale
+2. **OAuth 2.0** - Complex, needed for third-party auth later
+3. **API Keys** - Simpler, less secure for user auth
+
+---
+
+### ADR-006: Multi-Agent System Architecture
+
+**Status:** ACCEPTED  
+**Date:** 2026-01-15  
+**Deciders:** Product Owner, System Architect
+
+**Context:**
+Design approach for AI-assisted software development.
+
+**Decision:**
+Use multi-agent system with clear separation:
+- Product Owner (isolated)
+- Planner
+- Orchestrator (state management)
+- Architecture
+- Backend
+- Reviewer
+
+**Consequences:**
+- **Positive:** Clear separation of concerns
+- **Positive:** Human oversight at critical points
+- **Positive:** Scalable agent specialization
+- **Positive:** Reusable skills system
+- **Negative:** Coordination complexity
+- **Negative:** More moving parts than single agent
+
+**Alternatives Considered:**
+1. **Single Agent** - Simpler, less separation
+2. **Pair Programming AI** - Collaborative but less structured
+3. **Code Generation Only** - No governance or process
+
+---
+
+### ADR-007: STATE.json as Single Source of Truth
+
+**Status:** ACCEPTED  
+**Date:** 2026-01-15  
+**Deciders:** System Architect
+
+**Context:**
+How to coordinate multiple agents and track progress.
+
+**Decision:**
+Use STATE.json file as single source of truth, with Orchestrator as sole writer.
+
+**Consequences:**
+- **Positive:** Clear coordination mechanism
+- **Positive:** Human-readable state
+- **Positive:** Easy to audit and debug
+- **Positive:** Version controllable
+- **Negative:** File I/O overhead
+- **Neutral:** Need careful concurrency handling
+
+**Alternatives Considered:**
+1. **Database** - More robust, adds complexity
+2. **In-Memory State** - Faster, lost on restart
+3. **Event Stream** - Better for real-time, more complex
+
+---
+
+### ADR-008: Loki Stack Directory Organization
+
+**Status:** ACCEPTED  
+**Date:** 2026-04-20  
+**Deciders:** Architecture Agent
+
+**Context:**
+Loki Stack YAML configuration files are scattered across the repository:
+- `docker-compose.loki.yml` (root)
+- `loki/loki-config.yml`
+- `promtail/promtail-config.yml`
+- `grafana/provisioning/datasources/loki.yml`
+
+This makes it difficult to:
+- Find all configuration files quickly
+- Understand the complete Loki Stack setup
+- Maintain and update configurations
+- Onboard new team members
+
+**Decision:**
+Consolidate all Loki Stack YAML files into `deploy/loki/` directory with the following structure:
+
+```
+deploy/
+  loki/
+    docker-compose.yml          # Main Docker Compose file
+    loki-config.yml             # Loki server configuration
+    promtail-config.yml         # Promtail log collector configuration
+    grafana/
+      provisioning/
+        datasources/
+          loki.yml              # Grafana Loki datasource
+        dashboards/
+          investor-logs.json    # Pre-configured dashboard
+          dashboard.yml         # Dashboard provisioning config
+```
+
+**Consequences:**
+- **Positive:** All configs in single, discoverable location
+- **Positive:** Self-contained deployment unit
+- **Positive:** Easy to deploy: `docker-compose -f deploy/loki/docker-compose.yml up`
+- **Positive:** Scalable pattern for future deployments (k8s, local, etc.)
+- **Positive:** Follows golang-project-layout conventions
+- **Negative:** Requires updating volume paths in docker-compose.yml
+- **Negative:** One-time migration effort
+
+**Alternatives Considered:**
+
+1. **`loki-stack/` (root-level directory)**
+   - Why rejected: Creates too many root-level directories, doesn't scale for multiple deployment targets
+
+2. **`.infra/loki/` (hidden directory)**
+   - Why rejected: Hidden directories reduce discoverability, anti-pattern for important configs
+
+3. **Keep current structure (scattered files)**
+   - Why rejected: Poor discoverability, hard to maintain, violates "single location" principle
+
+4. **`infrastructure/loki/` (verbose naming)**
+   - Why rejected: Too verbose, `deploy/` is more concise and commonly used
+
+**Implementation Details:**
+
+| Current Path | New Path |
+|--------------|----------|
+| `docker-compose.loki.yml` | `deploy/loki/docker-compose.yml` |
+| `loki/loki-config.yml` | `deploy/loki/loki-config.yml` |
+| `promtail/promtail-config.yml` | `deploy/loki/promtail-config.yml` |
+| `grafana/provisioning/datasources/loki.yml` | `deploy/loki/grafana/provisioning/datasources/loki.yml` |
+
+**Volume Path Changes:**
+```yaml
+# Before
+volumes:
+  - ./loki:/etc/loki
+  - ./promtail:/etc/promtail
+  - ./grafana/provisioning:/etc/grafana/provisioning
+
+# After
+volumes:
+  - ./loki-config.yml:/etc/loki/loki-config.yml:ro
+  - ./promtail-config.yml:/etc/promtail/promtail-config.yml:ro
+  - ./grafana/provisioning:/etc/grafana/provisioning:ro
+```
+
+**References:**
+- EXECUTION_PLAN_LOKI_STACK.md — Task ORGANIZE-001
+- ARCHITECTURE.md — Section "Loki Stack Organization"
+- golang-project-layout skill — Directory structure best practices
+
+---
+
 ## Stats
 
-**Total Decisions:** 7  
-**Accepted:** 7  
+**Total Decisions:** 8  
+**Accepted:** 8  
 **Proposed:** 0  
 **Deprecated:** 0  
 **Superseded:** 0
 
 ---
 
-**Document Version:** 1.0  
-**Last Updated:** 2026-01-15
+**Document Version:** 1.1  
+**Last Updated:** 2026-04-20

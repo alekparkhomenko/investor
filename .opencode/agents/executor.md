@@ -1,7 +1,7 @@
 ---
 mode: subagent
 description: Агент-исполнитель — выполняет план, утверждённый пользователем
-model: glm-4.7-free
+model: minimax-m2.5-free
 tools:
   read: true
   write: true

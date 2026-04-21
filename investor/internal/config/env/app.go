@@ -7,14 +7,18 @@ import (
 )
 
 type appEnvConfig struct {
-	Symbols      string `env:"SYMBOLS,required"`
-	PollInterval string `env:"POLL_INTERVAL,required"`
+	Symbols       string `env:"SYMBOLS,required"`
+	PollInterval  string `env:"POLL_INTERVAL,required"`
+	DatabaseURL  string `env:"DATABASE_URL,required"`
+	HTTPHost     string `env:"HTTP_HOST" envDefault:"localhost"`
+	HTTPPort     string `env:"HTTP_PORT" envDefault:"8080"`
 }
 
 type appConfig struct {
 	raw appEnvConfig
 }
 
+// @visible
 func NewAppConfig() (*appConfig, error) {
 	var raw appEnvConfig
 	if err := env.Parse(&raw); err != nil {
@@ -34,4 +38,12 @@ func (c *appConfig) PollInterval() time.Duration {
 		return 2 * time.Second
 	}
 	return d
+}
+
+func (c *appConfig) DatabaseURL() string {
+	return c.raw.DatabaseURL
+}
+
+func (c *appConfig) HTTPAddress() string {
+	return c.raw.HTTPHost + ":" + c.raw.HTTPPort
 }
