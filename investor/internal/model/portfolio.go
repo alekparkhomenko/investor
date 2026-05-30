@@ -1,45 +1,33 @@
+// Package model defines shared data structures for the investor application.
 package model
 
 import "time"
 
-// Ticker represents an available MOEX stock ticker.
-type Ticker struct {
-	Symbol string `json:"symbol"`
-	Name   string `json:"name"`
-	Sector string `json:"sector,omitempty"`
-}
-
-// TickersResponse is the response for GET /api/v1/tickers.
-type TickersResponse struct {
-	Tickers []Ticker `json:"tickers"`
-}
-
-// Portfolio represents user's ticker portfolio.
+// Portfolio represents a user's stock portfolio.
 type Portfolio struct {
-	Tickers    []string   `json:"tickers"`
+	ID        int       `json:"id"`
+	UserID    string    `json:"user_id"`
+	Name      string    `json:"name"`
+	Tickers   []Ticker  `json:"tickers,omitempty"`
+	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
-// AddTickersRequest is the request for POST /api/v1/portfolio.
-type AddTickersRequest struct {
-	Tickers []string `json:"tickers" validate:"required,min=1"`
+// Ticker represents a stock ticker within a user's portfolio.
+type Ticker struct {
+	ID           int        `json:"id"`
+	PortfolioID  int        `json:"portfolio_id"`
+	Symbol       string     `json:"symbol"`
+	AddedAt      time.Time  `json:"added_at"`
+	CurrentPrice *float64   `json:"current_price,omitempty"`
+	LastUpdate   *time.Time `json:"last_update,omitempty"`
 }
 
-// AddTickersResponse is the response for POST /api/v1/portfolio.
-type AddTickersResponse struct {
-	Added   int      `json:"added"`
-	Tickers []string `json:"tickers"`
+// AvailableTicker represents a ticker available for trading on MOEX.
+type AvailableTicker struct {
+	Symbol string `json:"symbol"`
+	Name   string `json:"name"`
+	Market string `json:"market"`
+	Board  string `json:"board"`
 }
 
-// RemoveTickerResponse is the response for DELETE /api/v1/portfolio/{ticker}.
-type RemoveTickerResponse struct {
-	Removed bool   `json:"removed"`
-	Ticker  string `json:"ticker"`
-}
-
-// ErrorResponse is the standard error response.
-type ErrorResponse struct {
-	Error   string `json:"error"`
-	Message string `json:"message"`
-	Code    int    `json:"code"`
-}

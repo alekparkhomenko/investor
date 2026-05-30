@@ -410,12 +410,76 @@ volumes:
 
 ---
 
+### ADR-009: CLI → HTTP API Transition for Portfolio Feature
+
+**Status:** ACCEPTED
+**Date:** 2026-05-30
+**Deciders:** Product Owner, Architecture Agent
+
+### Context
+
+Feature #11 (User Portfolio Selection) was originally designed as a CLI interface using Cobra:
+- `investor portfolio add SBER`
+- `investor portfolio show`
+- `investor portfolio remove TATN`
+- `investor ticker list`
+
+However, after analysis, several issues emerged with the CLI approach:
+1. The application is currently a long-running daemon — switching to dual-mode (CLI + daemon) adds complexity
+2. CLI requires synchronous execution, while MOEX data ingestion is asynchronous
+3. Future features (alerting, notifications) naturally fit REST API patterns
+4. Swagger UI provides better DX for exploring and testing endpoints
+5. Integration with external tools (Grafana, webhooks) is easier via HTTP
+
+### Decision
+
+Replace CLI commands with a REST HTTP API for portfolio management. The application remains a daemon with an additional HTTP server.
+
+### Consequences
+
+**Positive:**
+- ✅ Single mode — application always runs as daemon with HTTP API
+- ✅ REST API is more extensible for future features
+- ✅ Swagger UI provides self-documenting interface
+- ✅ Easier integration with monitoring, alerting, and external tools
+- ✅ Consistent with existing ADR-003 (REST API for MVP)
+- ✅ Backward compatible — existing daemon behavior preserved
+
+**Negative:**
+- ❌ Requires HTTP client to interact (curl, browser, or client app)
+- ❌ No CLI autocompletion for portfolio commands
+- ❌ Additional port/host configuration
+
+**Neutral:**
+- Need to add HTTP server dependency (net/http or chi)
+- Port allocation for API server
+
+### Alternatives Considered
+
+1. **Pure CLI (Cobra, original plan)** — Rejected: adds mode complexity, harder to extend
+2. **Dual-mode (CLI + daemon)** — Rejected: increases maintenance, complex signal handling
+3. **gRPC** — Rejected: overkill for MVP, requires protobuf tooling
+4. **GraphQL** — Rejected: too complex for simple CRUD operations
+
+### Supersedes
+
+- ADR-003 (partially): Extends REST API scope beyond what was planned for MVP
+- Architecture v1.0 for Portfolio Feature (CLI section)
+
+### References
+
+- Feature #11 in BACKLOG.md
+- EXECUTION_PLAN_PORTFOLIO.md (to be updated to v1.1)
+- ARCHITECTURE_PORTFOLIO.md (to be updated to v2.0)
+
+---
+
 ## Stats
 
-**Total Decisions:** 8  
-**Accepted:** 8  
-**Proposed:** 0  
-**Deprecated:** 0  
+**Total Decisions:** 9
+**Accepted:** 9
+**Proposed:** 0
+**Deprecated:** 0
 **Superseded:** 0
 
 ---

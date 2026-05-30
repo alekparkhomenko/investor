@@ -12,7 +12,7 @@ import (
 	"github.com/alekparkhomenko/investor/investor/internal/config"
 	"github.com/alekparkhomenko/investor/investor/internal/http"
 	"github.com/alekparkhomenko/investor/investor/internal/ingestor"
-	"github.com/alekparkhomenko/investor/investor/internal/storage"
+	"github.com/alekparkhomenko/investor/investor/internal/portfolio"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/alekparkhomenko/investor/platform/pkg/closer"
 	"github.com/alekparkhomenko/investor/platform/pkg/logger"
@@ -64,11 +64,12 @@ func main() {
 	pool.Config().MaxConns = int32(cfg.DB.MaxOpenConns)
 	pool.Config().MinConns = int32(cfg.DB.MaxIdleConns)
 
-	// Initialize portfolio storage
-	store := storage.NewPortfolioStore(pool)
+	// Initialize portfolio store and service
+	store := portfolio.NewStore(pool)
+	svc := portfolio.NewService(store, appLogger)
 
 	// Initialize HTTP handler
-	handler := http.NewHandler(store)
+	handler := http.NewHandler(svc)
 
 	// Initialize HTTP server
 	httpServer := http.NewHTTPServer(http.Config{

@@ -1,0 +1,5 @@
+-- +goose Down
+DROP TRIGGER IF EXISTS update_portfolios_updated_at ON portfolios;
+DROP INDEX IF EXISTS idx_portfolios_user_id;
+DROP TABLE IF EXISTS portfolios;
+DROP FUNCTION IF EXISTS update_updated_at_column();

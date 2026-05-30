@@ -6,19 +6,48 @@ import (
 	"net/http"
 
 	"github.com/alekparkhomenko/investor/investor/internal/model"
-	"github.com/alekparkhomenko/investor/investor/internal/storage"
+	"github.com/alekparkhomenko/investor/investor/internal/portfolio"
 	"github.com/gorilla/mux"
 )
 
+// TickersResponse is the response for GET /api/v1/tickers.
+type TickersResponse struct {
+	Tickers []model.AvailableTicker `json:"tickers"`
+}
+
+// AddTickersRequest is the request for POST /api/v1/portfolio.
+type AddTickersRequest struct {
+	Tickers []string `json:"tickers"`
+}
+
+// AddTickersResponse is the response for POST /api/v1/portfolio.
+type AddTickersResponse struct {
+	Added   int      `json:"added"`
+	Tickers []string `json:"tickers"`
+}
+
+// RemoveTickerResponse is the response for DELETE /api/v1/portfolio/{ticker}.
+type RemoveTickerResponse struct {
+	Removed bool   `json:"removed"`
+	Ticker  string `json:"ticker"`
+}
+
+// ErrorResponse is the standard error response.
+type ErrorResponse struct {
+	Error   string `json:"error"`
+	Message string `json:"message"`
+	Code    int    `json:"code"`
+}
+
 // Handler handles HTTP requests for portfolio.
 type Handler struct {
-	store *storage.PortfolioStore
+	svc *portfolio.Service
 }
 
 // NewHandler creates a new Handler.
-func NewHandler(store *storage.PortfolioStore) *Handler {
+func NewHandler(svc *portfolio.Service) *Handler {
 	return &Handler{
-		store: store,
+		svc: svc,
 	}
 }
 
@@ -28,18 +57,18 @@ func NewHandler(store *storage.PortfolioStore) *Handler {
 // @Tags tickers
 // @Accept json
 // @Produce json
-// @Success 200 {object} model.TickersResponse
+// @Success 200 {object} TickersResponse
 // @Router /api/v1/tickers [get]
 func (h *Handler) ListTickers(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	tickers, err := h.store.GetAllTickers(ctx)
+	tickers, err := h.svc.ListAvailableTickers(ctx)
 	if err != nil {
 		writeError(w, "internal_error", "Failed to fetch tickers", http.StatusInternalServerError)
 		return
 	}
 
-	response := model.TickersResponse{
+	response := TickersResponse{
 		Tickers: tickers,
 	}
 
@@ -58,14 +87,16 @@ func (h *Handler) ListTickers(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) GetPortfolio(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	portfolio, err := h.store.GetPortfolio(ctx)
+	// TODO: extract userID from auth context in PORT-003
+	userID := "default"
+	portfolioResult, err := h.svc.GetPortfolio(ctx, userID)
 	if err != nil {
 		writeError(w, "internal_error", "Failed to fetch portfolio", http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(portfolio)
+	json.NewEncoder(w).Encode(portfolioResult)
 }
 
 // AddToPortfolio adds tickers to portfolio.
@@ -74,12 +105,12 @@ func (h *Handler) GetPortfolio(w http.ResponseWriter, r *http.Request) {
 // @Tags portfolio
 // @Accept json
 // @Produce json
-// @Success 200 {object} model.AddTickersResponse
+// @Success 200 {object} AddTickersResponse
 // @Router /api/v1/portfolio [post]
 func (h *Handler) AddToPortfolio(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	var req model.AddTickersRequest
+	var req AddTickersRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, "invalid_request", "Invalid request body", http.StatusBadRequest)
 		return
@@ -90,15 +121,17 @@ func (h *Handler) AddToPortfolio(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	added, err := h.store.AddTickers(ctx, req.Tickers)
+	// TODO: extract userID from auth context in PORT-003
+	userID := "default"
+	_, err := h.svc.AddTickers(ctx, userID, req.Tickers)
 	if err != nil {
 		writeError(w, "internal_error", "Failed to add tickers", http.StatusInternalServerError)
 		return
 	}
 
-	response := model.AddTickersResponse{
-		Added:   len(added),
-		Tickers: added,
+	response := AddTickersResponse{
+		Added:   len(req.Tickers),
+		Tickers: req.Tickers,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -111,7 +144,7 @@ func (h *Handler) AddToPortfolio(w http.ResponseWriter, r *http.Request) {
 // @Tags portfolio
 // @Accept json
 // @Produce json
-// @Success 200 {object} model.RemoveTickerResponse
+// @Success 200 {object} RemoveTickerResponse
 // @Param ticker path string true "Ticker symbol"
 // @Router /api/v1/portfolio/{ticker} [delete]
 func (h *Handler) RemoveFromPortfolio(w http.ResponseWriter, r *http.Request) {
@@ -120,9 +153,11 @@ func (h *Handler) RemoveFromPortfolio(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	ticker := vars["ticker"]
 
-	err := h.store.RemoveTicker(ctx, ticker)
+	// TODO: extract userID from auth context in PORT-003
+	userID := "default"
+	err := h.svc.RemoveTicker(ctx, userID, ticker)
 	if err != nil {
-		if errors.Is(err, storage.ErrTickerNotFound) {
+		if errors.Is(err, portfolio.ErrTickerNotFound) {
 			writeError(w, "not_found", "Ticker not in portfolio", http.StatusNotFound)
 			return
 		}
@@ -130,7 +165,7 @@ func (h *Handler) RemoveFromPortfolio(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := model.RemoveTickerResponse{
+	response := RemoveTickerResponse{
 		Removed: true,
 		Ticker:  ticker,
 	}
@@ -141,7 +176,7 @@ func (h *Handler) RemoveFromPortfolio(w http.ResponseWriter, r *http.Request) {
 
 func writeError(w http.ResponseWriter, err, msg string, code int) {
 	w.WriteHeader(code)
-	json.NewEncoder(w).Encode(model.ErrorResponse{
+	json.NewEncoder(w).Encode(ErrorResponse{
 		Error:   err,
 		Message: msg,
 		Code:    code,
