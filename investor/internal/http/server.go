@@ -43,6 +43,11 @@ type Config struct {
 func NewHTTPServer(cfg Config) *HTTPServer {
 	router := mux.NewRouter()
 
+	// Apply global middleware — order matters: recovery → logging → CORS → handlers
+	router.Use(RecoveryMiddleware(cfg.Logger))
+	router.Use(LoggingMiddleware(cfg.Logger))
+	router.Use(CORSMiddleware())
+
 	// API routes
 	api := router.PathPrefix("/api/v1").Subrouter()
 	api.HandleFunc("/tickers", cfg.Handler.ListTickers).Methods(http.MethodGet)

@@ -10,7 +10,7 @@ type appEnvConfig struct {
 	Symbols       string `env:"SYMBOLS,required"`
 	PollInterval  string `env:"POLL_INTERVAL,required"`
 	DatabaseURL  string `env:"DATABASE_URL,required"`
-	HTTPHost     string `env:"HTTP_HOST" envDefault:"localhost"`
+	HTTPHost     string `env:"HTTP_HOST" envDefault:"0.0.0.0"`
 	HTTPPort     string `env:"HTTP_PORT" envDefault:"8080"`
 }
 

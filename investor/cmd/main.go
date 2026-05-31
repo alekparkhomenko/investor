@@ -10,6 +10,7 @@ import (
 
 	"github.com/alekparkhomenko/investor/investor/internal/app"
 	"github.com/alekparkhomenko/investor/investor/internal/config"
+	"github.com/alekparkhomenko/investor/investor/internal/db"
 	"github.com/alekparkhomenko/investor/investor/internal/http"
 	"github.com/alekparkhomenko/investor/investor/internal/ingestor"
 	"github.com/alekparkhomenko/investor/investor/internal/portfolio"
@@ -64,6 +65,15 @@ func main() {
 	pool.Config().MaxConns = int32(cfg.DB.MaxOpenConns)
 	pool.Config().MinConns = int32(cfg.DB.MaxIdleConns)
 
+	// Run database migrations
+	if err := db.RunMigrations(appCtx, cfg.DB.URL, appLogger); err != nil {
+		appLogger.Error(appCtx, "failed to run migrations", logger.Fields{
+			"component": "main",
+			"error":     err.Error(),
+		})
+		os.Exit(1)
+	}
+
 	// Initialize portfolio store and service
 	store := portfolio.NewStore(pool)
 	svc := portfolio.NewService(store, appLogger)
@@ -104,9 +114,7 @@ func main() {
 		return a.Stop()
 	})
 
-	closer.Configure(syscall.SIGINT, syscall.SIGTERM)
-
-	// Run application
+	// Run application (blocks until SIGINT/SIGTERM cancels appCtx)
 	if err := a.Run(appCtx); err != nil {
 		appLogger.Error(appCtx, "application error", logger.Fields{
 			"component": "main",
@@ -115,26 +123,22 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Graceful shutdown
-	gracefulShutdown(appCtx, appLogger)
-}
+	// Graceful shutdown — appCtx is cancelled by signal, use background context
+	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer shutdownCancel()
 
-func gracefulShutdown(ctx context.Context, log *logger.Logger) {
-	shutdownCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
-	defer cancel()
-
-	log.Info(shutdownCtx, "graceful shutdown started", logger.Fields{
+	appLogger.Info(shutdownCtx, "graceful shutdown started", logger.Fields{
 		"component": "main",
 	})
 
 	if err := closer.CloseAll(shutdownCtx); err != nil {
-		log.Error(shutdownCtx, "error during shutdown", logger.Fields{
+		appLogger.Error(shutdownCtx, "error during shutdown", logger.Fields{
 			"component": "main",
 			"error":     err.Error(),
 		})
 	}
 
-	log.Info(shutdownCtx, "shutdown complete", logger.Fields{
+	appLogger.Info(shutdownCtx, "shutdown complete", logger.Fields{
 		"component": "main",
 	})
 }

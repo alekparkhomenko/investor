@@ -1,21 +1,41 @@
 {
     "swagger": "2.0",
     "info": {
+        "title": "Investor Portfolio API",
+        "description": "REST API for managing personal stock ticker portfolio on MOEX",
+        "version": "1.0.0",
         "contact": {}
     },
     "paths": {
+        "/api/v1/tickers": {
+            "get": {
+                "description": "Get all available MOEX stock tickers",
+                "consumes": ["application/json"],
+                "produces": ["application/json"],
+                "tags": ["tickers"],
+                "summary": "List available MOEX tickers",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/TickersResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/portfolio": {
             "get": {
                 "description": "Get user's saved ticker portfolio",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "portfolio"
-                ],
+                "consumes": ["application/json"],
+                "produces": ["application/json"],
+                "tags": ["portfolio"],
                 "summary": "Get user's portfolio",
                 "responses": {
                     "200": {
@@ -23,26 +43,54 @@
                         "schema": {
                             "$ref": "#/definitions/model.Portfolio"
                         }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
                     }
                 }
             },
             "post": {
                 "description": "Add tickers to user's portfolio",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "portfolio"
-                ],
+                "consumes": ["application/json"],
+                "produces": ["application/json"],
+                "tags": ["portfolio"],
                 "summary": "Add tickers to portfolio",
+                "parameters": [
+                    {
+                        "in": "body",
+                        "name": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/AddTickersRequest"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/model.AddTickersResponse"
+                            "$ref": "#/definitions/AddTickersResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable entity (invalid symbols)",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -51,15 +99,9 @@
         "/api/v1/portfolio/{ticker}": {
             "delete": {
                 "description": "Remove a ticker from user's portfolio",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "portfolio"
-                ],
+                "consumes": ["application/json"],
+                "produces": ["application/json"],
+                "tags": ["portfolio"],
                 "summary": "Remove ticker from portfolio",
                 "parameters": [
                     {
@@ -74,30 +116,19 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/model.RemoveTickerResponse"
+                            "$ref": "#/definitions/RemoveTickerResponse"
                         }
-                    }
-                }
-            }
-        },
-        "/api/v1/tickers": {
-            "get": {
-                "description": "Get all available MOEX stock tickers",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "tickers"
-                ],
-                "summary": "List available MOEX tickers",
-                "responses": {
-                    "200": {
-                        "description": "OK",
+                    },
+                    "404": {
+                        "description": "Ticker not found in portfolio",
                         "schema": {
-                            "$ref": "#/definitions/model.TickersResponse"
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -105,67 +136,154 @@
         }
     },
     "definitions": {
-        "model.AddTickersResponse": {
+        "TickersResponse": {
+            "type": "object",
+            "properties": {
+                "tickers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.AvailableTicker"
+                    }
+                }
+            }
+        },
+        "AddTickersRequest": {
+            "type": "object",
+            "required": ["tickers"],
+            "properties": {
+                "tickers": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": ["SBER", "GAZP", "TATN"]
+                }
+            }
+        },
+        "AddTickersResponse": {
             "type": "object",
             "properties": {
                 "added": {
-                    "type": "integer"
+                    "type": "integer",
+                    "example": 3
                 },
                 "tickers": {
                     "type": "array",
                     "items": {
                         "type": "string"
-                    }
+                    },
+                    "example": ["SBER", "GAZP", "TATN"]
                 }
             }
         },
-        "model.Portfolio": {
-            "type": "object",
-            "properties": {
-                "tickers": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "updated_at": {
-                    "type": "string"
-                }
-            }
-        },
-        "model.RemoveTickerResponse": {
+        "RemoveTickerResponse": {
             "type": "object",
             "properties": {
                 "removed": {
-                    "type": "boolean"
+                    "type": "boolean",
+                    "example": true
                 },
                 "ticker": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "SBER"
+                }
+            }
+        },
+        "ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string",
+                    "example": "not_found"
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Ticker not in portfolio"
+                },
+                "code": {
+                    "type": "integer",
+                    "example": 404
+                }
+            }
+        },
+        "model.AvailableTicker": {
+            "type": "object",
+            "properties": {
+                "symbol": {
+                    "type": "string",
+                    "example": "SBER"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "Sberbank"
+                },
+                "market": {
+                    "type": "string",
+                    "example": "stock"
+                },
+                "board": {
+                    "type": "string",
+                    "example": "TQBR"
                 }
             }
         },
         "model.Ticker": {
             "type": "object",
             "properties": {
-                "name": {
-                    "type": "string"
+                "id": {
+                    "type": "integer",
+                    "example": 1
                 },
-                "sector": {
-                    "type": "string"
+                "portfolio_id": {
+                    "type": "integer",
+                    "example": 1
                 },
                 "symbol": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "SBER"
+                },
+                "added_at": {
+                    "type": "string",
+                    "format": "date-time"
+                },
+                "current_price": {
+                    "type": "number",
+                    "format": "float"
+                },
+                "last_update": {
+                    "type": "string",
+                    "format": "date-time"
                 }
             }
         },
-        "model.TickersResponse": {
+        "model.Portfolio": {
             "type": "object",
             "properties": {
+                "id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "user_id": {
+                    "type": "string",
+                    "example": "default"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "default"
+                },
                 "tickers": {
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/model.Ticker"
                     }
+                },
+                "created_at": {
+                    "type": "string",
+                    "format": "date-time"
+                },
+                "updated_at": {
+                    "type": "string",
+                    "format": "date-time"
                 }
             }
         }

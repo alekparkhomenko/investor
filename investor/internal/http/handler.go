@@ -32,13 +32,6 @@ type RemoveTickerResponse struct {
 	Ticker  string `json:"ticker"`
 }
 
-// ErrorResponse is the standard error response.
-type ErrorResponse struct {
-	Error   string `json:"error"`
-	Message string `json:"message"`
-	Code    int    `json:"code"`
-}
-
 // Handler handles HTTP requests for portfolio.
 type Handler struct {
 	svc *portfolio.Service
@@ -64,16 +57,13 @@ func (h *Handler) ListTickers(w http.ResponseWriter, r *http.Request) {
 
 	tickers, err := h.svc.ListAvailableTickers(ctx)
 	if err != nil {
-		writeError(w, "internal_error", "Failed to fetch tickers", http.StatusInternalServerError)
+		errorResponse(w, http.StatusInternalServerError, "internal_error", "Failed to fetch tickers")
 		return
 	}
 
-	response := TickersResponse{
+	jsonResponse(w, http.StatusOK, TickersResponse{
 		Tickers: tickers,
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	})
 }
 
 // GetPortfolio returns user's portfolio.
@@ -91,12 +81,11 @@ func (h *Handler) GetPortfolio(w http.ResponseWriter, r *http.Request) {
 	userID := "default"
 	portfolioResult, err := h.svc.GetPortfolio(ctx, userID)
 	if err != nil {
-		writeError(w, "internal_error", "Failed to fetch portfolio", http.StatusInternalServerError)
+		errorResponse(w, http.StatusInternalServerError, "internal_error", "Failed to fetch portfolio")
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(portfolioResult)
+	jsonResponse(w, http.StatusOK, portfolioResult)
 }
 
 // AddToPortfolio adds tickers to portfolio.
@@ -112,12 +101,12 @@ func (h *Handler) AddToPortfolio(w http.ResponseWriter, r *http.Request) {
 
 	var req AddTickersRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, "invalid_request", "Invalid request body", http.StatusBadRequest)
+		errorResponse(w, http.StatusBadRequest, "invalid_request", "Invalid request body")
 		return
 	}
 
 	if len(req.Tickers) == 0 {
-		writeError(w, "invalid_request", "No tickers provided", http.StatusBadRequest)
+		errorResponse(w, http.StatusBadRequest, "invalid_request", "No tickers provided")
 		return
 	}
 
@@ -125,17 +114,25 @@ func (h *Handler) AddToPortfolio(w http.ResponseWriter, r *http.Request) {
 	userID := "default"
 	_, err := h.svc.AddTickers(ctx, userID, req.Tickers)
 	if err != nil {
-		writeError(w, "internal_error", "Failed to add tickers", http.StatusInternalServerError)
+		if errors.Is(err, portfolio.ErrEmptySymbols) {
+			errorResponse(w, http.StatusBadRequest, "invalid_request", "No tickers provided")
+			return
+		}
+
+		var valErr *portfolio.ValidationError
+		if errors.As(err, &valErr) {
+			errorResponse(w, http.StatusUnprocessableEntity, "invalid_symbols", err.Error())
+			return
+		}
+
+		errorResponse(w, http.StatusInternalServerError, "internal_error", "Failed to add tickers")
 		return
 	}
 
-	response := AddTickersResponse{
+	jsonResponse(w, http.StatusOK, AddTickersResponse{
 		Added:   len(req.Tickers),
 		Tickers: req.Tickers,
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	})
 }
 
 // RemoveFromPortfolio removes ticker from portfolio.
@@ -158,27 +155,15 @@ func (h *Handler) RemoveFromPortfolio(w http.ResponseWriter, r *http.Request) {
 	err := h.svc.RemoveTicker(ctx, userID, ticker)
 	if err != nil {
 		if errors.Is(err, portfolio.ErrTickerNotFound) {
-			writeError(w, "not_found", "Ticker not in portfolio", http.StatusNotFound)
+			errorResponse(w, http.StatusNotFound, "not_found", "Ticker not in portfolio")
 			return
 		}
-		writeError(w, "internal_error", "Failed to remove ticker", http.StatusInternalServerError)
+		errorResponse(w, http.StatusInternalServerError, "internal_error", "Failed to remove ticker")
 		return
 	}
 
-	response := RemoveTickerResponse{
+	jsonResponse(w, http.StatusOK, RemoveTickerResponse{
 		Removed: true,
 		Ticker:  ticker,
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
-}
-
-func writeError(w http.ResponseWriter, err, msg string, code int) {
-	w.WriteHeader(code)
-	json.NewEncoder(w).Encode(ErrorResponse{
-		Error:   err,
-		Message: msg,
-		Code:    code,
 	})
 }

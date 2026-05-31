@@ -1,6 +1,7 @@
 package db
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 
@@ -8,16 +9,19 @@ import (
 
 	// Register the pgx stdlib driver for database/sql.
 	_ "github.com/jackc/pgx/v5/stdlib"
+
+	"github.com/alekparkhomenko/investor/platform/pkg/logger"
 )
 
 // RunMigrations runs all pending database migrations using goose.
 // It opens a connection to the database using the pgx driver,
 // then applies any pending migration files found in the
 // investor/migrations directory (relative to the module root).
-//
-// Migration status is printed to stdout. In the future this
-// will be replaced with structured logging.
-func RunMigrations(dsn string) error {
+func RunMigrations(ctx context.Context, dsn string, log *logger.Logger) error {
+	log.Info(ctx, "starting database migrations", logger.Fields{
+		"component": "db",
+	})
+
 	db, err := sql.Open("pgx", dsn)
 	if err != nil {
 		return fmt.Errorf("opening database connection: %w", err)
@@ -32,7 +36,9 @@ func RunMigrations(dsn string) error {
 		return fmt.Errorf("running migrations: %w", err)
 	}
 
-	// TODO: replace with structured logger in PORT-004
+	log.Info(ctx, "database migrations completed", logger.Fields{
+		"component": "db",
+	})
 
 	return nil
 }
